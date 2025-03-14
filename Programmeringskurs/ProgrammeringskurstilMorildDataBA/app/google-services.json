@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "898028315637",
+    "project_id": "bodo-tech-1",
+    "storage_bucket": "bodo-tech-1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:898028315637:android:d9d5c33cdcf2da46ed76bc",
+        "android_client_info": {
+          "package_name": "com.example.programmeringskurstilmorilddataba"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCV--EvyvAytk-I9IAzsTWazQ_0QPDaBSc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
