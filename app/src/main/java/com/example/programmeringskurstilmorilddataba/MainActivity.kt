@@ -6,65 +6,74 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import com.example.programmeringskurstilmorilddataba.ui.theme.ProgrammeringskursTilMorildDataBATheme
-import com.google.firebase.auth.FirebaseAuth
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.ui.unit.dp
-import androidx.compose.runtime.remember
-import androidx.compose.material3.Button
-import androidx.compose.runtime.*
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.compose.NavHost
+import com.example.programmeringskurstilmorilddataba.ui.theme.ProgrammeringskursTilMorildDataBATheme
 import com.google.firebase.FirebaseApp
-import androidx.compose.foundation.background
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.graphics.Color
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.userProfileChangeRequest
-import okhttp3.*
+import com.google.firebase.firestore.FirebaseFirestore
+import okhttp3.Call
+import okhttp3.Callback
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.Response
 import org.json.JSONObject
 import java.io.IOException
-
-
+import android.util.Log
+import com.google.firebase.firestore.DocumentSnapshot
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
         FirebaseApp.initializeApp(this)
-
         enableEdgeToEdge()
         setContent {
             ProgrammeringskursTilMorildDataBATheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    AppNavigation(modifier = Modifier.padding(innerPadding))
-                }
+                AppNavigation()
             }
         }
     }
 }
 
+
 @Composable
 fun AppNavigation(modifier: Modifier = Modifier) {
     val navController = rememberNavController()
-    
-    val loginRoute = stringResource(R.string.login)
-    val registerRoute = stringResource(R.string.register)
+
+    val loginRoute = "Login"
+    val registerRoute = "Register"
+    val adminCourseRoute = "adminCourse"
+    val userUIRoute = "userUI"
 
     NavHost(
         navController = navController,
@@ -76,28 +85,49 @@ fun AppNavigation(modifier: Modifier = Modifier) {
         composable(registerRoute) {
             RegisterScreen(navController)
         }
+        composable(adminCourseRoute) {
+            AdminCourseScreen(navController)
+        }
+        composable(userUIRoute) {
+            UserUIScreen(navController)
+        }
     }
 }
 
 @Composable
 fun LoginScreen(navController: NavController) {
     val auth = FirebaseAuth.getInstance()
+    val db = FirebaseFirestore.getInstance()
 
     var email by remember { mutableStateOf(TextFieldValue()) }
     var password by remember { mutableStateOf(TextFieldValue()) }
     var errorMessage by remember { mutableStateOf("") }
 
-    val loginCompletedMessage = stringResource(R.string.login_completed)
-    val loginFailedMessage = stringResource(R.string.login_failed)
-    val registerMessage = stringResource(R.string.register)
-
     fun loginUser(email: String, password: String) {
         auth.signInWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
-                    errorMessage = loginCompletedMessage
+                    val user = auth.currentUser
+                    user?.let {
+                        db.collection("users").document(it.uid).get()
+                            .addOnSuccessListener { document ->
+                                if (document.exists()) {
+                                    val isAdmin = document.getBoolean("isAdmin") ?: false
+                                    if (isAdmin) {
+                                        navController.navigate("adminCourse")
+                                    } else {
+                                        navController.navigate("userUI")
+                                    }
+                                } else {
+                                    errorMessage = "User data not found."
+                                }
+                            }
+                            .addOnFailureListener { e ->
+                                errorMessage = "Failed to fetch user data: ${e.message}"
+                            }
+                    }
                 } else {
-                    errorMessage = loginFailedMessage + task.exception?.message
+                    errorMessage = "Login failed: ${task.exception?.message}"
                 }
             }
     }
@@ -109,10 +139,12 @@ fun LoginScreen(navController: NavController) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text(stringResource(R.string.login),
+        Text(
+            "Login",
             style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.background(Color.LightGray, shape = RoundedCornerShape(50))
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+            modifier = Modifier
+                .background(Color.LightGray, shape = RoundedCornerShape(50))
+                .padding(horizontal = 16.dp, vertical = 8.dp)
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -120,7 +152,7 @@ fun LoginScreen(navController: NavController) {
         OutlinedTextField(
             value = email,
             onValueChange = { email = it },
-            label = { Text(stringResource(R.string.e_mail)) },
+            label = { Text("E-mail") },
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -129,7 +161,7 @@ fun LoginScreen(navController: NavController) {
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
-            label = { Text(stringResource(R.string.password)) },
+            label = { Text("Password") },
             modifier = Modifier.fillMaxWidth(),
             visualTransformation = PasswordVisualTransformation()
         )
@@ -140,16 +172,16 @@ fun LoginScreen(navController: NavController) {
             onClick = { loginUser(email.text, password.text) },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text(stringResource(R.string.log_in))
+            Text("Login")
         }
 
         Spacer(modifier = Modifier.height(8.dp))
 
         Button(
-            onClick = { navController.navigate(registerMessage) },
+            onClick = { navController.navigate("register") },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text(stringResource(R.string.go_to_registration))
+            Text("Go to registration")
         }
 
         if (errorMessage.isNotEmpty()) {
@@ -167,11 +199,12 @@ fun RegisterScreen(navController: NavController) {
     var password by remember { mutableStateOf(TextFieldValue()) }
     var errorMessage by remember { mutableStateOf("") }
 
-    val registrationCompletedMessage = stringResource(R.string.registration_completed)
-    val registrationFailedMessage = stringResource(R.string.registration_failed)
     val invalidEmailMessage = "Invalid Email!"
 
     fun registerUser(fullName: String, email: String, password: String) {
+        val auth = FirebaseAuth.getInstance()
+        val db = FirebaseFirestore.getInstance()
+
         auth.createUserWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
@@ -179,12 +212,28 @@ fun RegisterScreen(navController: NavController) {
                     val profileUpdates = userProfileChangeRequest {
                         displayName = fullName
                     }
+
                     user?.updateProfile(profileUpdates)?.addOnCompleteListener { profileTask ->
-                        errorMessage = if (profileTask.isSuccessful) registrationCompletedMessage
-                        else registrationFailedMessage + profileTask.exception?.message
+                        if (profileTask.isSuccessful) {
+                            val userData = hashMapOf(
+                                "email" to email,
+                                "isAdmin" to false
+                            )
+
+                            db.collection("users").document(user!!.uid)
+                                .set(userData)
+                                .addOnSuccessListener {
+                                    errorMessage = "Registration successful!"
+                                }
+                                .addOnFailureListener { e ->
+                                    errorMessage = "Failed to save user data: ${e.message}"
+                                }
+                        } else {
+                            errorMessage = "Failed to update profile: ${profileTask.exception?.message}"
+                        }
                     }
                 } else {
-                    errorMessage = registrationFailedMessage + task.exception?.message
+                    errorMessage = "Registration failed: ${task.exception?.message}"
                 }
             }
     }
@@ -196,7 +245,7 @@ fun RegisterScreen(navController: NavController) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text(stringResource(R.string.register),
+        Text("Register",
             style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier.background(Color.LightGray, shape = RoundedCornerShape(50))
                 .padding(horizontal = 16.dp, vertical = 8.dp)
@@ -207,7 +256,7 @@ fun RegisterScreen(navController: NavController) {
         OutlinedTextField(
             value = fullName,
             onValueChange = { fullName = it },
-            label = { Text(stringResource(R.string.full_name)) },
+            label = { Text("Full Name") },
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -216,7 +265,7 @@ fun RegisterScreen(navController: NavController) {
         OutlinedTextField(
             value = email,
             onValueChange = { email = it },
-            label = { Text(stringResource(R.string.e_mail)) },
+            label = { Text("E-mail") },
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -225,7 +274,7 @@ fun RegisterScreen(navController: NavController) {
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
-            label = { Text(stringResource(R.string.password)) },
+            label = { Text("Password") },
             modifier = Modifier.fillMaxWidth(),
             visualTransformation = PasswordVisualTransformation()
         )
@@ -244,7 +293,7 @@ fun RegisterScreen(navController: NavController) {
             },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text(stringResource(R.string.register))
+            Text("Register")
         }
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -253,13 +302,81 @@ fun RegisterScreen(navController: NavController) {
             onClick = { navController.popBackStack() },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text(stringResource(R.string.return_to_login))
+            Text("Return to login")
         }
 
         if (errorMessage.isNotEmpty()) {
             Text(errorMessage, color = MaterialTheme.colorScheme.error)
         }
     }
+}
+
+@Composable
+fun UserUIScreen(navController: NavController) {
+    val auth = FirebaseAuth.getInstance()
+    val db = FirebaseFirestore.getInstance()
+    val currentUser = auth.currentUser
+    var courses by remember { mutableStateOf(listOf<DocumentSnapshot>()) }
+
+    LaunchedEffect(currentUser) {
+        getCourses(db) { courses = it }
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = "Welcome, User!",
+            style = MaterialTheme.typography.headlineMedium
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = "Available Courses:",
+            style = MaterialTheme.typography.bodyLarge
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        if (courses.isEmpty()) {
+            Text("No courses available.")
+        } else {
+            courses.forEach { doc ->
+                Text(
+                    text = "${doc["courseName"]}: ${doc["description"]}",
+                    modifier = Modifier.padding(vertical = 4.dp)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Logout Button
+        Button(
+            onClick = {
+                auth.signOut()
+                navController.navigate("login")
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Log Out")
+        }
+    }
+}
+
+fun getCourses(db: FirebaseFirestore, onResult: (List<DocumentSnapshot>) -> Unit) {
+    db.collection("courses").get()
+        .addOnSuccessListener { documents ->
+            onResult(documents.documents)
+        }
+        .addOnFailureListener { e ->
+            Log.w("Firestore", "Error fetching courses", e)
+        }
 }
 
 fun checkEmailValidity(email: String, onResult: (Boolean) -> Unit) {

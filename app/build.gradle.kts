@@ -64,4 +64,5 @@ dependencies {
     implementation ("androidx.navigation:navigation-compose:2.8.7")
     implementation ("com.google.firebase:firebase-auth")
     implementation("com.squareup.okhttp3:okhttp:4.9.3")
+    implementation ("com.google.firebase:firebase-firestore-ktx:24.10.0")
 }
