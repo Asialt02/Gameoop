@@ -28,7 +28,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
@@ -192,7 +191,6 @@ fun LoginScreen(navController: NavController) {
 
 @Composable
 fun RegisterScreen(navController: NavController) {
-    val auth = FirebaseAuth.getInstance()
 
     var fullName by remember { mutableStateOf(TextFieldValue()) }
     var email by remember { mutableStateOf(TextFieldValue()) }
@@ -391,6 +389,7 @@ fun checkEmailValidity(email: String, onResult: (Boolean) -> Unit) {
             e.printStackTrace()
             onResult(false)
         }
+        
 
         override fun onResponse(call: Call, response: Response) {
             response.use { res ->
