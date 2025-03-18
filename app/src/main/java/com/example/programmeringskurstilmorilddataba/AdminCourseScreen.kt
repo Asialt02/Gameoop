@@ -209,7 +209,7 @@ fun addCourse(db: FirebaseFirestore, courseName: String, description: String) {
         "courseName" to courseName,
         "description" to description,
         "modules" to listOf<String>() // Initialize an empty list for modules
-    ) as MutableMap<String, Any> // Explicit cast to MutableMap<String, Any>
+    ) as MutableMap<String, Any>
 
     db.collection("courses").add(course)
         .addOnSuccessListener {
