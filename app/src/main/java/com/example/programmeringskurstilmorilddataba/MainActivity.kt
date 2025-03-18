@@ -367,16 +367,6 @@ fun UserUIScreen(navController: NavController) {
     }
 }
 
-fun getCourses(db: FirebaseFirestore, onResult: (List<DocumentSnapshot>) -> Unit) {
-    db.collection("courses").get()
-        .addOnSuccessListener { documents ->
-            onResult(documents.documents)
-        }
-        .addOnFailureListener { e ->
-            Log.w("Firestore", "Error fetching courses", e)
-        }
-}
-
 fun checkEmailValidity(email: String, onResult: (Boolean) -> Unit) {
     val apiKey = "4a3503e6c3244594a00dd486d77126ac"
     val url = "https://emailvalidation.abstractapi.com/v1/?api_key=$apiKey&email=$email"
@@ -389,7 +379,7 @@ fun checkEmailValidity(email: String, onResult: (Boolean) -> Unit) {
             e.printStackTrace()
             onResult(false)
         }
-        
+
 
         override fun onResponse(call: Call, response: Response) {
             response.use { res ->
