@@ -70,7 +70,8 @@ fun AppNavigation(modifier: Modifier = Modifier) {
     val registerRoute = "Register"
     val adminCourseRoute = "adminCourse"
     val userUIRoute = "userUI"
-    val courseScreenRoute = "courseScreen"
+    val userProfileRoute = "userProfile"
+    val updateUserProfileRoute = "UpdateUserProfile"
 
     NavHost(
         navController = navController,
@@ -91,6 +92,12 @@ fun AppNavigation(modifier: Modifier = Modifier) {
         composable("courseScreen/{courseName}") { backStackEntry ->
             val courseName = backStackEntry.arguments?.getString("courseName") ?: ""
             CourseScreen(navController, courseName)
+        }
+        composable(userProfileRoute) {
+            UserProfile(navController)
+        }
+        composable(updateUserProfileRoute) {
+            UpdateUserProfile(navController)
         }
     }
 }
@@ -216,8 +223,10 @@ fun RegisterScreen(navController: NavController) {
                     user?.updateProfile(profileUpdates)?.addOnCompleteListener { profileTask ->
                         if (profileTask.isSuccessful) {
                             val userData = hashMapOf(
+                                "name" to fullName,
                                 "email" to email,
-                                "isAdmin" to false
+                                "isAdmin" to false,
+                                "password" to password
                             )
 
                             db.collection("users").document(user!!.uid)

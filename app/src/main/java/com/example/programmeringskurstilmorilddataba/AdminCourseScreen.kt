@@ -229,16 +229,6 @@ fun addCourse(db: FirebaseFirestore, courseName: String) {
         }
 }
 
-fun updateCourse(db: FirebaseFirestore, courseId: String, courseName: String, description: String) {
-    val updatedCourse = mapOf(
-        "courseName" to courseName,
-        "description" to description
-    )
-    db.collection("courses").document(courseId).update(updatedCourse)
-        .addOnSuccessListener { Log.d("Firestore", "Course Updated") }
-        .addOnFailureListener { e -> Log.w("Firestore", "Error while updating Course", e) }
-}
-
 fun addModuleToCourse(db: FirebaseFirestore, courseId: String, newModule: String) {
     db.collection("courses").document(courseId).update(
         "modules", FieldValue.arrayUnion(newModule) // Add module to the "modules" array
@@ -255,15 +245,5 @@ fun deleteCourse(db: FirebaseFirestore, courseId: String, onSuccess: () -> Unit)
         }
         .addOnFailureListener { e ->
             Log.w("Firestore", "Error while deleting Course", e)
-        }
-}
-
-fun getCourses(db: FirebaseFirestore, onResult: (List<DocumentSnapshot>) -> Unit) {
-    db.collection("courses").get()
-        .addOnSuccessListener { documents ->
-            onResult(documents.documents)
-        }
-        .addOnFailureListener { e ->
-            Log.w("Firestore", "Error fetching courses", e)
         }
 }
