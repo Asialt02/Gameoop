@@ -20,7 +20,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -48,8 +47,6 @@ import okhttp3.Request
 import okhttp3.Response
 import org.json.JSONObject
 import java.io.IOException
-import android.util.Log
-import com.google.firebase.firestore.DocumentSnapshot
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -73,6 +70,7 @@ fun AppNavigation(modifier: Modifier = Modifier) {
     val registerRoute = "Register"
     val adminCourseRoute = "adminCourse"
     val userUIRoute = "userUI"
+    val courseScreenRoute = "courseScreen"
 
     NavHost(
         navController = navController,
@@ -89,6 +87,10 @@ fun AppNavigation(modifier: Modifier = Modifier) {
         }
         composable(userUIRoute) {
             UserUIScreen(navController)
+        }
+        composable("courseScreen/{courseName}") { backStackEntry ->
+            val courseName = backStackEntry.arguments?.getString("courseName") ?: ""
+            CourseScreen(navController, courseName)
         }
     }
 }
@@ -305,64 +307,6 @@ fun RegisterScreen(navController: NavController) {
 
         if (errorMessage.isNotEmpty()) {
             Text(errorMessage, color = MaterialTheme.colorScheme.error)
-        }
-    }
-}
-
-@Composable
-fun UserUIScreen(navController: NavController) {
-    val auth = FirebaseAuth.getInstance()
-    val db = FirebaseFirestore.getInstance()
-    val currentUser = auth.currentUser
-    var courses by remember { mutableStateOf(listOf<DocumentSnapshot>()) }
-
-    LaunchedEffect(currentUser) {
-        getCourses(db) { courses = it }
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text(
-            text = "Welcome, User!",
-            style = MaterialTheme.typography.headlineMedium
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text(
-            text = "Available Courses:",
-            style = MaterialTheme.typography.bodyLarge
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        if (courses.isEmpty()) {
-            Text("No courses available.")
-        } else {
-            courses.forEach { doc ->
-                Text(
-                    text = "${doc["courseName"]}: ${doc["description"]}",
-                    modifier = Modifier.padding(vertical = 4.dp)
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Logout Button
-        Button(
-            onClick = {
-                auth.signOut()
-                navController.navigate("login")
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Log Out")
         }
     }
 }

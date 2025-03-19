@@ -18,11 +18,7 @@ fun AdminCourseScreen(navController: NavController) {
     val auth = FirebaseAuth.getInstance()
     val db = FirebaseFirestore.getInstance()
     val currentUser = auth.currentUser
-    var courses by remember { mutableStateOf(listOf<DocumentSnapshot>()) }
     var courseName by remember { mutableStateOf("") }  // For course name
-    var courseDescription by remember { mutableStateOf("") } // For course description
-    var courseIdToUpdate by remember { mutableStateOf("") } // To store the ID of the course to update
-    var newModule by remember { mutableStateOf("") } // To store the new module
     var isAdmin by remember { mutableStateOf(false) }
 
     // Checking if the current user is an admin
@@ -50,18 +46,10 @@ fun AdminCourseScreen(navController: NavController) {
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // Input field for course description
-            OutlinedTextField(
-                value = courseDescription,
-                onValueChange = { courseDescription = it },
-                label = { Text("Description") },
-                modifier = Modifier.fillMaxWidth()
-            )
-
             // Button to add a course
             Button(onClick = {
-                if (courseName.isNotBlank() && courseDescription.isNotBlank()) {
-                    addCourse(db, courseName, courseDescription)
+                if (courseName.isNotBlank()) {
+                    addCourse(db, courseName)
                 } else {
                     Log.w("AdminCourseScreen", "Course name or description is empty.")
                 }
@@ -72,13 +60,7 @@ fun AdminCourseScreen(navController: NavController) {
             // Button to get and display the specific course by name
             Button(onClick = {
                 if (courseName.isNotBlank()) {
-                    getCourseByName(db, courseName) { course ->
-                        if (course != null) {
-                            courses = listOf(course)
-                        } else {
-                            Log.w("AdminCourseScreen", "No course found with the name: $courseName")
-                        }
-                    }
+                    navController.navigate("courseScreen/$courseName")
                 } else {
                     Log.w("AdminCourseScreen", "Course name is empty.")
                 }
@@ -86,12 +68,65 @@ fun AdminCourseScreen(navController: NavController) {
                 Text("Get Course")
             }
 
-            // Displaying the selected course
-            courses.forEach { doc ->
-                val courseId = doc.id // Get the document ID for each course
-                val name = doc.getString("courseName") ?: "Unknown"
-                val description = doc.getString("description") ?: "No Description"
-                val modules = doc.get("modules") as? List<String> ?: emptyList()
+            // Logout Button
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(onClick = {
+                auth.signOut()
+                navController.navigate("login") // Navigate back to the login screen
+            }) {
+                Text("Log Out")
+            }
+        }
+    } else {
+        Text("You do not have permission to access this screen.", modifier = Modifier.padding(16.dp))
+    }
+}
+
+@Composable
+fun CourseScreen(navController: NavController, courseName: String) {
+    val db = FirebaseFirestore.getInstance()
+    var course by remember { mutableStateOf<DocumentSnapshot?>(null) } // Store a single course
+    var newModule by remember { mutableStateOf("") } // To store the new module
+    var courseDescription by remember { mutableStateOf("") } // For course description
+    var courseIdToUpdate by remember { mutableStateOf("") }
+
+    // Fetch the course when the screen loads
+    LaunchedEffect(courseName) {
+        getCourseByName(db, courseName) { fetchedCourse ->
+            course = fetchedCourse  // Update state with fetched data
+        }
+    }
+
+    Column(
+        modifier = Modifier.fillMaxSize().padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        if (course == null) {
+            Text("No course found for: $courseName", style = MaterialTheme.typography.bodyMedium)
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Button(onClick = {
+                navController.popBackStack()
+            })
+            {Text("Head Back")}
+        } else {
+            val name = course!!.getString("courseName") ?: "Unknown"
+            val description = course!!.getString("description") ?: "No Description"
+            val modules = course!!.get("modules") as? List<String> ?: emptyList()
+
+            Text(text = "Course Name: $name", style = MaterialTheme.typography.headlineMedium)
+            Text(text = "Description: $description", style = MaterialTheme.typography.bodyLarge)
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(text = "Modules:", style = MaterialTheme.typography.headlineSmall)
+            modules.forEach { module ->
+                Text(text = "- $module", style = MaterialTheme.typography.bodyMedium)
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
 
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text("$name: $description")
@@ -113,8 +148,10 @@ fun AdminCourseScreen(navController: NavController) {
 
                     Button(
                         onClick = {
-                            if (newModule.isNotBlank()) {
-                                addModuleToCourse(db, courseId, newModule)
+                            course?.id?.let { id ->
+                                if (newModule.isNotBlank()) {
+                                    addModuleToCourse(db, id, newModule)
+                                }
                             }
                         }
                     ) {
@@ -124,9 +161,10 @@ fun AdminCourseScreen(navController: NavController) {
                     // Button to update the course
                     Button(
                         onClick = {
-                            courseIdToUpdate = courseId
-                            courseName = name
-                            courseDescription = description
+                            course?.id?.let { id ->
+                                courseIdToUpdate = id
+                                courseDescription = course?.getString("description") ?: ""
+                            }
                         }
                     ) {
                         Text("Update Course")
@@ -135,55 +173,27 @@ fun AdminCourseScreen(navController: NavController) {
                     // Button to delete the course
                     Button(
                         onClick = {
-                            deleteCourse(db, courseId) {}
+                            course?.id?.let { id ->
+                                deleteCourse(db, id) {}
+                                navController.popBackStack()
+                            }
                         }
                     ) {
                         Text("Delete Course")
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
+
+                    Button(onClick = {
+                        navController.popBackStack()
+                    })
+                    {Text("Head Back")}
                 }
             }
 
-            // If a course is selected for update, display update form
-            if (courseIdToUpdate.isNotEmpty()) {
-                Text("Updating Course")
-
-                OutlinedTextField(
-                    value = courseName,
-                    onValueChange = { courseName = it },
-                    label = { Text("Updated Course Name") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                OutlinedTextField(
-                    value = courseDescription,
-                    onValueChange = { courseDescription = it },
-                    label = { Text("Updated Description") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Button(onClick = {
-                    updateCourse(db, courseIdToUpdate, courseName, courseDescription)
-                    courseIdToUpdate = "" // Reset update course
-                }) {
-                    Text("Update Course")
-                }
-            }
-
-            // Logout Button
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(onClick = {
-                auth.signOut()
-                navController.navigate("login") // Navigate back to the login screen
-            }) {
-                Text("Log Out")
-            }
         }
-    } else {
-        Text("You do not have permission to access this screen.", modifier = Modifier.padding(16.dp))
     }
-}
+
 
 // Function to get a course by its name
 fun getCourseByName(db: FirebaseFirestore, courseName: String, onResult: (DocumentSnapshot?) -> Unit) {
@@ -204,10 +214,9 @@ fun getCourseByName(db: FirebaseFirestore, courseName: String, onResult: (Docume
         }
 }
 
-fun addCourse(db: FirebaseFirestore, courseName: String, description: String) {
+fun addCourse(db: FirebaseFirestore, courseName: String) {
     val course = hashMapOf(
         "courseName" to courseName,
-        "description" to description,
         "modules" to listOf<String>() // Initialize an empty list for modules
     ) as MutableMap<String, Any>
 
@@ -258,9 +267,3 @@ fun getCourses(db: FirebaseFirestore, onResult: (List<DocumentSnapshot>) -> Unit
             Log.w("Firestore", "Error fetching courses", e)
         }
 }
-
-data class Course(
-    val courseName: String = "",
-    val description: String = "",
-    val modules: MutableList<String> = mutableListOf()  // Mutable list of modules
-)
