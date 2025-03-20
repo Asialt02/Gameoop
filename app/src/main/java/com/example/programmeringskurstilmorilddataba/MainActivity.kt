@@ -66,10 +66,6 @@ class MainActivity : ComponentActivity() {
 //Comment Amir
 
 
-
-//Dette er bare meg som prøver å finne ut hvordan man bruker github -Martin
-
-
 @Composable
 fun AppNavigation(modifier: Modifier = Modifier) {
     val navController = rememberNavController()
