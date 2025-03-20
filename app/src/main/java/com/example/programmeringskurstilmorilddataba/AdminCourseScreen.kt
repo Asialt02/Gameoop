@@ -18,10 +18,9 @@ fun AdminCourseScreen(navController: NavController) {
     val auth = FirebaseAuth.getInstance()
     val db = FirebaseFirestore.getInstance()
     val currentUser = auth.currentUser
-    var courseName by remember { mutableStateOf("") }  // For course name
+    var courseName by remember { mutableStateOf("") }
     var isAdmin by remember { mutableStateOf(false) }
 
-    // Checking if the current user is an admin
     LaunchedEffect(currentUser) {
         currentUser?.let {
             db.collection("users").document(it.uid).get()
@@ -31,49 +30,47 @@ fun AdminCourseScreen(navController: NavController) {
         }
     }
 
-    if (isAdmin) {
-        Column(
-            modifier = Modifier.fillMaxSize().padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            OutlinedTextField(
-                value = courseName,
-                onValueChange = { courseName = it },
-                label = { Text("Course Name") },
-                modifier = Modifier.fillMaxWidth()
-            )
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        OutlinedTextField(
+            value = courseName,
+            onValueChange = { courseName = it },
+            label = { Text("Course Name") },
+            modifier = Modifier.fillMaxWidth()
+        )
 
-            Button(onClick = {
-                if (courseName.isNotBlank()) {
-                    addCourse(db, courseName)
-                } else {
-                    Log.w("AdminCourseScreen", "Course name or description is empty.")
-                }
-            }) {
-                Text("Add Course")
+        Button(onClick = {
+            if (courseName.isNotBlank()) {
+                addCourse(db, courseName)
+            } else {
+                Log.w("AdminCourseScreen", "Course name or description is empty.")
             }
-
-            Button(onClick = {
-                if (courseName.isNotBlank()) {
-                    navController.navigate("courseScreen/$courseName")
-                } else {
-                    Log.w("AdminCourseScreen", "Course name is empty.")
-                }
-            }) {
-                Text("Get Course")
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(onClick = {
-                auth.signOut()
-                navController.navigate("login")
-            }) {
-                Text("Log Out")
-            }
+        }) {
+            Text("Add Course")
         }
-    } else {
-        Text("You do not have permission to access this screen.", modifier = Modifier.padding(16.dp))
+
+        Button(onClick = {
+            if (courseName.isNotBlank()) {
+                navController.navigate("courseScreen/$courseName")
+            } else {
+                Log.w("AdminCourseScreen", "Course name is empty.")
+            }
+        }) {
+            Text("Get Course")
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+        Button(onClick = {
+            auth.signOut()
+            navController.navigate("login")
+        }) {
+            Text("Log Out")
+        }
     }
 }
 
@@ -92,7 +89,9 @@ fun CourseScreen(navController: NavController, courseName: String) {
     }
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -161,7 +160,6 @@ fun CourseScreen(navController: NavController, courseName: String) {
                         Text("Update Course")
                     }
 
-                    // Button to delete the course
                     Button(
                         onClick = {
                             course?.id?.let { id ->
@@ -186,7 +184,6 @@ fun CourseScreen(navController: NavController, courseName: String) {
     }
 
 
-// Function to get a course by its name
 fun getCourseByName(db: FirebaseFirestore, courseName: String, onResult: (DocumentSnapshot?) -> Unit) {
     db.collection("courses")
         .whereEqualTo("courseName", courseName)
