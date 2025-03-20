@@ -58,65 +58,43 @@ fun UserUIScreen(navController: NavController) {
         }
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
+    Column(
+        modifier = Modifier.fillMaxSize()
     ) {
-        Button(
-            onClick = {
-                navController.navigate("userProfile")
-            },
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(top = 16.dp, end = 16.dp)
-        ) {
-            Text("Profile")
-        }
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .weight(1f)
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = "Welcome, ${userName}!",
+                    style = MaterialTheme.typography.headlineMedium
+                )
 
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-            modifier = Modifier.fillMaxSize()
-        ) {
-            Text(
-                text = "Welcome, ${userName}!",
-                style = MaterialTheme.typography.headlineMedium
-            )
+                Spacer(modifier = Modifier.height(16.dp))
 
-            Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "Available Courses:",
+                    style = MaterialTheme.typography.bodyLarge
+                )
 
-            Text(
-                text = "Available Courses:",
-                style = MaterialTheme.typography.bodyLarge
-            )
+                Spacer(modifier = Modifier.height(8.dp))
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            if (courses.isEmpty()) {
-                Text("No courses available.")
-            } else {
-                courses.forEach { doc ->
-                    Text(
-                        text = "${doc["courseName"]}: ${doc["description"]}",
-                        modifier = Modifier.padding(vertical = 4.dp)
-                    )
+                if (courses.isEmpty()) {
+                    Text("No courses available.")
+                } else {
+                    courses.forEach { doc ->
+                        Text(
+                            text = "${doc["courseName"]}: ${doc["description"]}",
+                            modifier = Modifier.padding(vertical = 4.dp)
+                        )
+                    }
                 }
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Logout Button
-            Button(
-                onClick = {
-                    auth.signOut()
-                    navController.navigate("login")
-                },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Log Out")
-            }
-        }
+        BottomNavBar(navController)
     }
 }
 
@@ -129,8 +107,8 @@ fun UserProfile(navController: NavController) {
     var errorMessage by remember { mutableStateOf("") }
     var userName by remember { mutableStateOf("") }
     var userEmail by remember { mutableStateOf("") }
-    var userIsAdmin by remember { mutableStateOf(false)}
-    var userPassword by remember { mutableStateOf("")}
+    var userIsAdmin by remember { mutableStateOf(false) }
+    var userPassword by remember { mutableStateOf("") }
 
     currentUser?.let {
         db.collection("users").document(it.uid).get()
@@ -140,8 +118,7 @@ fun UserProfile(navController: NavController) {
                     userEmail = document.getString("email") ?: ""
                     userIsAdmin = document.getBoolean("isAdmin") ?: false
                     userPassword = document.getString("password") ?: ""
-                }
-                else {
+                } else {
                     errorMessage = "User data not found."
                 }
             }
@@ -151,129 +128,30 @@ fun UserProfile(navController: NavController) {
     }
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        modifier = Modifier.fillMaxSize()
     ) {
-        Row {
-            Text(
-                text = "Name: ",
-                style = MaterialTheme.typography.headlineMedium
-            )
-
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .weight(1f)
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
             Text(
                 text = userName,
                 style = MaterialTheme.typography.headlineMedium
             )
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        Row {
-            Text(
-                text = "Email: ",
-                style = MaterialTheme.typography.headlineMedium
-            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
             Text(
                 text = userEmail,
                 style = MaterialTheme.typography.headlineMedium
             )
         }
-        Spacer(modifier = Modifier.height(8.dp))
-        Row {
-            Text(
-                text = "Is Admin: ",
-                style = MaterialTheme.typography.headlineMedium
-            )
-            Text(
-                text = if (userIsAdmin) "Yes" else "No",
-                style = MaterialTheme.typography.headlineMedium
-            )
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        Row {
-            Text(
-                text = "Password: ",
-                style = MaterialTheme.typography.headlineMedium
-            )
-            Text(
-                text = userPassword,
-                style = MaterialTheme.typography.headlineMedium
-            )
-        }
-        Spacer(modifier = Modifier.height(16.dp))
-        Button(
-            onClick = {
-                navController.navigate("UpdateUserProfile")
-            }
-        ) {
-            Text("Update Profile")
-        }
-        Spacer(modifier = Modifier.height(16.dp))
-        Button(
-            onClick = {
-                navController.navigate("userUI")
-            }
-        ) {
-            Text("Return")
-        }
-    }
-}
 
-@Composable
-fun UpdateUserProfile(navController: NavController) {
-    val auth = FirebaseAuth.getInstance()
-    val db = FirebaseFirestore.getInstance()
-    val currentUser = auth.currentUser
-    var errorMessage by remember { mutableStateOf("") }
-
-    var userName by remember { mutableStateOf("") }
-    var userEmail by remember { mutableStateOf("") }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ){
-        OutlinedTextField(
-            value = userName,
-            onValueChange = { userName = it },
-            label = { Text("New Name") },
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        OutlinedTextField(
-            value = userEmail,
-            onValueChange = { userEmail = it },
-            label = { Text("New Email") },
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Button(
-            onClick = {
-                checkEmailValidity(userEmail) { isValid ->
-                    if (isValid) {
-                        currentUser?.uid?.let { userId ->
-                            updateUser(db, userId, userName, userEmail)
-                        }
-                    } else {
-                        errorMessage = "Invalid email!"
-                    }
-                }
-            }
-        ) {
-            Text("Update Profile")
-        }
-        Spacer(modifier = Modifier.height(16.dp))
-        Button(
-            onClick = {
-                navController.navigate("userProfile")
-            }
-        ) {
-            Text("Return")
-        }
+        BottomNavBar(navController)
     }
 }
 
@@ -295,7 +173,7 @@ fun getCoursesUser(db: FirebaseFirestore, userId: String, onResult: (List<Docume
     db.collection("users").document(userId).collection("usercourses") // Target the subcollection
         .get()
         .addOnSuccessListener { documents ->
-            onResult(documents.documents) // Return the list of courses
+            onResult(documents.documents)
         }
         .addOnFailureListener { e ->
             Log.w("Firestore", "Error fetching courses", e)

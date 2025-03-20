@@ -7,14 +7,17 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -72,7 +75,6 @@ fun AppNavigation(modifier: Modifier = Modifier) {
     val adminCourseRoute = "adminCourse"
     val userUIRoute = "userUI"
     val userProfileRoute = "userProfile"
-    val updateUserProfileRoute = "UpdateUserProfile"
 
     NavHost(
         navController = navController,
@@ -97,9 +99,6 @@ fun AppNavigation(modifier: Modifier = Modifier) {
         composable(userProfileRoute) {
             UserProfile(navController)
         }
-        composable(updateUserProfileRoute) {
-            UpdateUserProfile(navController)
-        }
     }
 }
 
@@ -111,6 +110,7 @@ fun LoginScreen(navController: NavController) {
     var email by remember { mutableStateOf(TextFieldValue()) }
     var password by remember { mutableStateOf(TextFieldValue()) }
     var errorMessage by remember { mutableStateOf("") }
+    var showForgotPasswordDialog by remember { mutableStateOf(false) }
 
     fun loginUser(email: String, password: String) {
         auth.signInWithEmailAndPassword(email, password)
@@ -149,14 +149,17 @@ fun LoginScreen(navController: NavController) {
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            "Login",
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier
-                .background(Color.LightGray, shape = RoundedCornerShape(50))
-                .padding(horizontal = 16.dp, vertical = 8.dp)
+            text = "Gameoop!",
+            style = MaterialTheme.typography.headlineLarge,
+            modifier = Modifier.padding(bottom = 32.dp)
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        // Login Text
+        Text(
+            text = "Login",
+            style = MaterialTheme.typography.headlineMedium,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
 
         OutlinedTextField(
             value = email,
@@ -181,32 +184,104 @@ fun LoginScreen(navController: NavController) {
             onClick = { loginUser(email.text, password.text) },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Login")
+            Text("Log in")
         }
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        Button(
-            onClick = { navController.navigate("register") },
-            modifier = Modifier.fillMaxWidth()
+        Text(
+            text = "Forgot password?",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.clickable {
+                showForgotPasswordDialog = true
+            }
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // No Account? Join Now! Text
+        Row(
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Go to registration")
+            Text(
+                text = "No account? ",
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Text(
+                text = "Join now!",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.clickable {
+                    navController.navigate("register")
+                }
+            )
         }
 
+        // Error Message
         if (errorMessage.isNotEmpty()) {
-            Text(errorMessage, color = MaterialTheme.colorScheme.error)
+            Text(
+                text = errorMessage,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(top = 16.dp)
+            )
         }
+    }
+
+    // Forgot Password Dialog
+    if (showForgotPasswordDialog) {
+        AlertDialog(
+            onDismissRequest = { showForgotPasswordDialog = false },
+            title = { Text("Forgot Password") },
+            text = {
+                Column {
+                    Text("Enter your email address to receive a password reset link.")
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = email,
+                        onValueChange = { email = it },
+                        label = { Text("Email") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (email.text.isNotBlank()) {
+                            sendPasswordResetEmail(email.text) { success, message ->
+                                if (success) {
+                                    errorMessage = message
+                                    showForgotPasswordDialog = false
+                                } else {
+                                    errorMessage = message
+                                }
+                            }
+                        } else {
+                            errorMessage = "Please enter your email address."
+                        }
+                    }
+                ) {
+                    Text("Send")
+                }
+            },
+            dismissButton = {
+                Button(
+                    onClick = { showForgotPasswordDialog = false }
+                ) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }
 
 @Composable
 fun RegisterScreen(navController: NavController) {
-
     var fullName by remember { mutableStateOf(TextFieldValue()) }
     var email by remember { mutableStateOf(TextFieldValue()) }
     var password by remember { mutableStateOf(TextFieldValue()) }
     var errorMessage by remember { mutableStateOf("") }
-
     val invalidEmailMessage = "Invalid Email!"
 
     fun registerUser(fullName: String, email: String, password: String) {
@@ -230,7 +305,7 @@ fun RegisterScreen(navController: NavController) {
                                 "password" to password
                             )
 
-                            db.collection("users").document(user!!.uid)
+                            db.collection("users").document(user.uid)
                                 .set(userData)
                                 .addOnSuccessListener {
                                     errorMessage = "Registration successful!"
@@ -255,32 +330,41 @@ fun RegisterScreen(navController: NavController) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text("Register",
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.background(Color.LightGray, shape = RoundedCornerShape(50))
-                .padding(horizontal = 16.dp, vertical = 8.dp)
+        // Gameoop! Text
+        Text(
+            text = "Gameoop!",
+            style = MaterialTheme.typography.headlineLarge,
+            modifier = Modifier.padding(bottom = 32.dp)
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        // Register Text
+        Text(
+            text = "Register",
+            style = MaterialTheme.typography.headlineMedium,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
 
+        // Username Input
         OutlinedTextField(
             value = fullName,
             onValueChange = { fullName = it },
-            label = { Text("Full Name") },
+            label = { Text("Username") },
             modifier = Modifier.fillMaxWidth()
         )
 
         Spacer(modifier = Modifier.height(8.dp))
 
+        // Email Input
         OutlinedTextField(
             value = email,
             onValueChange = { email = it },
-            label = { Text("E-mail") },
+            label = { Text("Email") },
             modifier = Modifier.fillMaxWidth()
         )
 
         Spacer(modifier = Modifier.height(8.dp))
 
+        // Password Input
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
@@ -291,6 +375,7 @@ fun RegisterScreen(navController: NavController) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        // Register Button
         Button(
             onClick = {
                 checkEmailValidity(email.text) { isValid ->
@@ -305,21 +390,85 @@ fun RegisterScreen(navController: NavController) {
         ) {
             Text("Register")
         }
-
         Spacer(modifier = Modifier.height(8.dp))
 
         Button(
-            onClick = { navController.popBackStack() },
+            onClick = {
+                navController.navigate("login")
+            },
             modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Return to login")
+        ){
+            Text("Return to Login")
         }
 
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Terms of Service Text
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Terms of Service? ",
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Text(
+                text = "Read more",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.clickable {
+                }
+            )
+        }
+
+        // Error Message
         if (errorMessage.isNotEmpty()) {
-            Text(errorMessage, color = MaterialTheme.colorScheme.error)
+            Text(
+                text = errorMessage,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(top = 16.dp)
+            )
         }
     }
 }
+
+@Composable
+fun BottomNavBar(navController: NavController) {
+    val items = listOf(
+        BottomNavItem("Dashboard", "userUI"),
+        BottomNavItem("Courses", "Courses"),
+        BottomNavItem("Profile", "userProfile"),
+        BottomNavItem("Friends", "Friends"),
+        BottomNavItem("Settings", "Settings")
+    )
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFF00008B))
+            .padding(8.dp),
+        horizontalArrangement = Arrangement.SpaceAround
+    ) {
+        items.forEach { item ->
+            Text(
+                text = item.title,
+                color = Color.White,
+                modifier = Modifier
+                    .clickable {
+                        navController.navigate(item.route) {
+                            popUpTo(navController.graph.startDestinationId)
+                            launchSingleTop = true
+                        }
+                    }
+                    .padding(8.dp)
+            )
+        }
+    }
+}
+
+data class BottomNavItem(
+    val title: String,
+    val route: String
+)
 
 fun checkEmailValidity(email: String, onResult: (Boolean) -> Unit) {
     val apiKey = "4a3503e6c3244594a00dd486d77126ac"
@@ -353,7 +502,17 @@ fun checkEmailValidity(email: String, onResult: (Boolean) -> Unit) {
     })
 }
 
-
+fun sendPasswordResetEmail(email: String, onResult: (Boolean, String) -> Unit) {
+    val auth = FirebaseAuth.getInstance()
+    auth.sendPasswordResetEmail(email)
+        .addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                onResult(true, "Password reset email sent to $email")
+            } else {
+                onResult(false, task.exception?.message ?: "Failed to send reset email")
+            }
+        }
+}
 
 @Preview(showBackground = true)
 @Composable

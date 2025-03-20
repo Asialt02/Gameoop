@@ -31,14 +31,12 @@ fun AdminCourseScreen(navController: NavController) {
         }
     }
 
-    // If the user is an admin, show the admin UI
     if (isAdmin) {
         Column(
             modifier = Modifier.fillMaxSize().padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Input field for course name
             OutlinedTextField(
                 value = courseName,
                 onValueChange = { courseName = it },
@@ -46,7 +44,6 @@ fun AdminCourseScreen(navController: NavController) {
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // Button to add a course
             Button(onClick = {
                 if (courseName.isNotBlank()) {
                     addCourse(db, courseName)
@@ -57,7 +54,6 @@ fun AdminCourseScreen(navController: NavController) {
                 Text("Add Course")
             }
 
-            // Button to get and display the specific course by name
             Button(onClick = {
                 if (courseName.isNotBlank()) {
                     navController.navigate("courseScreen/$courseName")
@@ -68,11 +64,10 @@ fun AdminCourseScreen(navController: NavController) {
                 Text("Get Course")
             }
 
-            // Logout Button
             Spacer(modifier = Modifier.height(16.dp))
             Button(onClick = {
                 auth.signOut()
-                navController.navigate("login") // Navigate back to the login screen
+                navController.navigate("login")
             }) {
                 Text("Log Out")
             }
@@ -85,15 +80,14 @@ fun AdminCourseScreen(navController: NavController) {
 @Composable
 fun CourseScreen(navController: NavController, courseName: String) {
     val db = FirebaseFirestore.getInstance()
-    var course by remember { mutableStateOf<DocumentSnapshot?>(null) } // Store a single course
-    var newModule by remember { mutableStateOf("") } // To store the new module
-    var courseDescription by remember { mutableStateOf("") } // For course description
+    var course by remember { mutableStateOf<DocumentSnapshot?>(null) }
+    var newModule by remember { mutableStateOf("") }
+    var courseDescription by remember { mutableStateOf("") }
     var courseIdToUpdate by remember { mutableStateOf("") }
 
-    // Fetch the course when the screen loads
     LaunchedEffect(courseName) {
         getCourseByName(db, courseName) { fetchedCourse ->
-            course = fetchedCourse  // Update state with fetched data
+            course = fetchedCourse
         }
     }
 
@@ -131,14 +125,12 @@ fun CourseScreen(navController: NavController, courseName: String) {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text("$name: $description")
 
-                    // Show modules (if available)
                     if (modules.isNotEmpty()) {
                         Text("Modules: ${modules.joinToString(", ")}")
                     } else {
                         Text("No modules added yet.")
                     }
 
-                    // Adding a module
                     OutlinedTextField(
                         value = newModule,
                         onValueChange = { newModule = it },
@@ -158,7 +150,6 @@ fun CourseScreen(navController: NavController, courseName: String) {
                         Text("Add Module")
                     }
 
-                    // Button to update the course
                     Button(
                         onClick = {
                             course?.id?.let { id ->
@@ -198,19 +189,18 @@ fun CourseScreen(navController: NavController, courseName: String) {
 // Function to get a course by its name
 fun getCourseByName(db: FirebaseFirestore, courseName: String, onResult: (DocumentSnapshot?) -> Unit) {
     db.collection("courses")
-        .whereEqualTo("courseName", courseName)  // Query for the course by its name
+        .whereEqualTo("courseName", courseName)
         .get()
         .addOnSuccessListener { querySnapshot ->
             if (!querySnapshot.isEmpty) {
-                // Get the first document (assuming course name is unique)
                 onResult(querySnapshot.documents.first())
             } else {
-                onResult(null)  // No course found
+                onResult(null)
             }
         }
         .addOnFailureListener { e ->
             Log.w("Firestore", "Error fetching course by name", e)
-            onResult(null)  // Handle error and return null
+            onResult(null)
         }
 }
 
