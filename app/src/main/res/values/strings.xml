@@ -1,3 +1,51 @@
 <resources>
+    <!--AppNavigation Routes-->
+    <string name="login">Login</string>
+    <string name="register">Register</string>
+    <string name="user_screen">User</string>
+    <string name="courses">Courses</string>
+    <string name="modules">Modules</string>
+    <string name="change_display_name_route">ChangeDisplayName</string>
+    <string name="change_password_route">ChangePassword</string>
+    <string name="settings_screen_route">SettingsScreen</string>
+
+    <!--MainActivity.kt / Other-->
     <string name="app_name">Programmeringskurs til Morild Data BA</string>
+    <string name="logout">Logout</string>
+    <string name="change_password">Change password</string>
+    <string name="change_display_name">Change display name</string>
+    <string name="login_completed">Login completed</string>
+    <string name="login_failed">Failed: </string>
+    <string name="e_mail">E-mail</string>
+    <string name="password">Password</string>
+    <string name="display_name">Display name</string>
+    <string name="log_in">Log in</string>
+    <string name="go_to_registration">Go to registration</string>
+    <string name="go_to_edit">Edit profile</string>
+    <string name="registration_completed">Registration completed</string>
+    <string name="registration_failed">Failed: </string>
+    <string name="return_to_login">Return to login</string>
+    <string name="full_name">Full Name</string>
+    <string name="not_logged_in">Not logged in</string>
+    <string name="logged_in_as">Logged in as</string>
+    <string name="password_updated">Password updated</string>
+    <string name="display_name_updated">Display name updated</string>
+    <string name="delete_account">Delete account</string>
+    <string name="delete_account_warning">Are you sure you want to delete your account?</string>
+
+
+    <!--CoursesAndModules.kt-->
+    <string name="all_courses">All Courses</string>
+    <string name="all_modules">All Modules</string>
+    <string name="modules_completed">Modules completed:</string>
+    <string name="chapters_completed">Chapters completed:</string>
+    <string name="read_more">Read more</string>
+
+    <!--ChangeUserInfo.kt-->
+    <string name="new_display_name">New display name</string>
+    <string name="new_password">New password</string>
+    <string name="old_password">Old password</string>
+
+
+
 </resources>
