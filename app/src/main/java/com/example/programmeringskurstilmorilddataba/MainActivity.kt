@@ -290,38 +290,45 @@ fun RegisterScreen(navController: NavController) {
         val auth = FirebaseAuth.getInstance()
         val db = FirebaseFirestore.getInstance()
 
-        auth.createUserWithEmailAndPassword(email, password)
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    val user = auth.currentUser
-                    val profileUpdates = userProfileChangeRequest {
-                        displayName = fullName
-                    }
+        db.collection("users")
+            .whereEqualTo("email", email)
+            .get()
+            .addOnSuccessListener {
+                    errorMessage = "This email is already registered. Please try logging in."
+            }
+            .addOnFailureListener {
+                auth.createUserWithEmailAndPassword(email, password)
+                    .addOnCompleteListener { task ->
+                        if (task.isSuccessful) {
+                            val user = auth.currentUser
+                            val profileUpdates = userProfileChangeRequest {
+                                displayName = fullName
+                            }
 
-                    user?.updateProfile(profileUpdates)?.addOnCompleteListener { profileTask ->
-                        if (profileTask.isSuccessful) {
-                            val userData = hashMapOf(
-                                "name" to fullName,
-                                "email" to email,
-                                "isAdmin" to false,
-                                "password" to password
-                            )
+                            user?.updateProfile(profileUpdates)?.addOnCompleteListener { profileTask ->
+                                if (profileTask.isSuccessful) {
+                                    val userData = hashMapOf(
+                                        "name" to fullName,
+                                        "email" to email,
+                                        "isAdmin" to false
+                                    )
 
-                            db.collection("users").document(user.uid)
-                                .set(userData)
-                                .addOnSuccessListener {
-                                    errorMessage = "Registration successful!"
+                                    db.collection("users").document(user.uid)
+                                        .set(userData)
+                                        .addOnSuccessListener {
+                                            errorMessage = "Registration successful!"
+                                        }
+                                        .addOnFailureListener { e ->
+                                            errorMessage = "Failed to save user data: ${e.message}"
+                                        }
+                                } else {
+                                    errorMessage = "Failed to update profile: ${profileTask.exception?.message}"
                                 }
-                                .addOnFailureListener { e ->
-                                    errorMessage = "Failed to save user data: ${e.message}"
-                                }
+                            }
                         } else {
-                            errorMessage = "Failed to update profile: ${profileTask.exception?.message}"
+                            errorMessage = "Registration failed: ${task.exception?.message}"
                         }
                     }
-                } else {
-                    errorMessage = "Registration failed: ${task.exception?.message}"
-                }
             }
     }
 
