@@ -26,7 +26,10 @@ import com.google.firebase.firestore.FirebaseFirestore
 import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.ui.text.style.TextAlign
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
 fun UserUIScreen(navController: NavController) {
@@ -59,7 +62,9 @@ fun UserUIScreen(navController: NavController) {
     }
 
     Column(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally
+
     ) {
             Column(
                 modifier = Modifier
@@ -67,36 +72,39 @@ fun UserUIScreen(navController: NavController) {
                     .weight(1f)
                     .padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
             ) {
                 Text(
                     text = "Welcome, ${userName}!",
-                    style = MaterialTheme.typography.headlineMedium
+                    style = MaterialTheme.typography.displayMedium,
+                    textAlign = TextAlign.Center,
                 )
-
                 Spacer(modifier = Modifier.height(16.dp))
+                ActiveCourseList(db)
 
-                Text(
-                    text = "Available Courses:",
-                    style = MaterialTheme.typography.bodyLarge
-                )
 
                 Spacer(modifier = Modifier.height(8.dp))
-
-                if (courses.isEmpty()) {
-                    Text("No courses available.")
-                } else {
-                    courses.forEach { doc ->
-                        Text(
-                            text = "${doc["courseName"]}: ${doc["description"]}",
-                            modifier = Modifier.padding(vertical = 4.dp)
-                        )
-                    }
-                }
             }
         BottomNavBar(navController)
     }
 }
+
+/*
+@Composable
+fun Data() {
+    val myCardData = listOf(
+        CardData("Card 1", "Description 1", R.drawable.ic_launcher_foreground),
+        CardData("Card 2", "Description 2", R.drawable.ic_launcher_foreground),
+        CardData("Card 3", "Description 3", R.drawable.ic_launcher_foreground),
+        CardData("Card 4", "Description 4", R.drawable.ic_launcher_foreground),
+        CardData("Card 5", "Description 5", R.drawable.ic_launcher_foreground),
+        CardData("Card 6", "Description 6", R.drawable.ic_launcher_foreground),
+        CardData("Card 7", "Description 7", R.drawable.ic_launcher_foreground),
+        CardData("Card 8", "Description 8", R.drawable.ic_launcher_foreground),
+    )
+    HorizontalCardList(cardDataList = myCardData)
+}
+*/
+
 
 
 @Composable

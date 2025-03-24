@@ -152,14 +152,14 @@ fun LoginScreen(navController: NavController) {
     ) {
         Text(
             text = "Gameoop!",
-            style = MaterialTheme.typography.headlineLarge,
+            style = MaterialTheme.typography.displayLarge,
             modifier = Modifier.padding(bottom = 32.dp)
         )
 
         // Login Text
         Text(
             text = "Login",
-            style = MaterialTheme.typography.headlineMedium,
+            style = MaterialTheme.typography.displaySmall,
             modifier = Modifier.padding(bottom = 16.dp)
         )
 
@@ -453,7 +453,8 @@ fun BottomNavBar(navController: NavController) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFF00008B))
+            .background(MaterialTheme.colorScheme.primary,
+                shape = RoundedCornerShape(32.dp, 32.dp, 0.dp, 0.dp))
             .padding(8.dp),
         horizontalArrangement = Arrangement.SpaceAround
     ) {
@@ -468,7 +469,8 @@ fun BottomNavBar(navController: NavController) {
                             launchSingleTop = true
                         }
                     }
-                    .padding(8.dp)
+                    .padding(8.dp),
+                style = MaterialTheme.typography.bodyMedium
             )
         }
     }
