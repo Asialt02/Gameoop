@@ -50,6 +50,50 @@ import okhttp3.Request
 import okhttp3.Response
 import org.json.JSONObject
 import java.io.IOException
+//
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.CornerSize
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.unit.dp
+import androidx.core.view.MenuProvider
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
+//import com.example.sprint2.ui.theme.Sprint2Theme
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.IconButton
+import com.google.firebase.firestore.DocumentSnapshot
+import androidx.activity.compose.setContent as setContent
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -475,6 +519,156 @@ fun BottomNavBar(navController: NavController) {
         }
     }
 }
+///San kode
+@Composable
+fun CourseScreen(courses: List<DocumentSnapshot>) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        ProgressCard() // Can later be made dynamic
+
+        courses.forEachIndexed { index, courseDoc ->
+            val chapterName = courseDoc.getString("chapterName") ?: "Chapter ${index + 1}"
+            val level = courseDoc.getString("level") ?: "LVL ${index + 1}"
+            val progress = courseDoc.getString("progress") ?: "0 of 5"
+            val tasks = (courseDoc.get("tasks") as? List<String>) ?: listOf("Task1", "Task2", "Task3")
+
+            ChapterCard(
+                chapterName = chapterName,
+                level = level,
+                progress = progress,
+                tasks = tasks
+            )
+        }
+    }
+}
+
+@Composable
+fun ChapterCard(chapterName: String, level: String, progress: String, tasks: List<String>) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp),
+        shape = RoundedCornerShape(15.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFD6B9FF)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(text = chapterName, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = Color(0xFFA084E8),
+                    modifier = Modifier.padding(end = 8.dp)
+                ) {
+                    Text(
+                        text = level,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        color = Color.White
+                    )
+                }
+                Text(
+                    text = progress,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.DarkGray,
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+                IconButton(onClick = { expanded = !expanded }) {
+                    Icon(
+                        imageVector = Icons.Default.KeyboardArrowRight,
+                        contentDescription = "Toggle tasks",
+                        tint = Color.Gray
+                    )
+                }
+            }
+
+            if (expanded) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 32.dp, bottom = 8.dp)
+                ) {
+                    tasks.forEachIndexed { index, task ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(vertical = 4.dp)
+                        ) {
+                            Checkbox(
+                                checked = index % 2 == 0,
+                                onCheckedChange = {}
+                            )
+                            Text(text = task, style = MaterialTheme.typography.bodyMedium)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ProgressCard() {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        shape = RoundedCornerShape(15.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFB084E8)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "Variables and Datatypes",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color.White
+                )
+                Text(
+                    text = "Chapters complete 2/4\nTasks complete 10/20",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.White
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(10.dp)
+                            .background(Color.Green, shape = CircleShape)
+                    )
+                    Text(
+                        text = " Beginner",
+                        color = Color.White,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+
+            CircularProgressIndicator(
+                progress = { 0.5f },
+                color = Color(0xFF6A0DAD),
+                trackColor = Color(0xFFE0B0FF),
+                strokeWidth = 6.dp,
+                modifier = Modifier.size(50.dp)
+            )
+        }
+    }
+}
+
+
 
 data class BottomNavItem(
     val title: String,
