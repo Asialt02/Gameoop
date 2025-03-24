@@ -63,7 +63,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-
+//kommentere
 
 @Composable
 fun AppNavigation(modifier: Modifier = Modifier) {
