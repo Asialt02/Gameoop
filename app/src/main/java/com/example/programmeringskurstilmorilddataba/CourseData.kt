@@ -2,25 +2,6 @@ package com.example.programmeringskurstilmorilddataba
 
 import com.google.firebase.firestore.FirebaseFirestore
 
-fun loadCourseDataFromDatabase() {
-    val db = FirebaseFirestore.getInstance()
-
-    var data = "If you see this something fucked up"
-
-    db.collection("courses_v2_(Testing)").document("courseID1Testing").get()
-        .addOnSuccessListener { document ->
-            if (document.exists()) {
-                data = document.get("courseName").toString()
-                println(data)
-            }
-
-        }
-        .addOnFailureListener { e ->
-            println(e.message)
-        }
-
-    println(data)
-}
 
 data class CourseInformation(
     val id: Int = 0,
@@ -42,6 +23,8 @@ data class ModuleInformation(
     val difficulty: String = "Placeholder",
     val noOfChapters: Int = 0,
 
+    var unlocked: Boolean = false,
+
     var completedChapters: Int = 0
 )
 
@@ -59,7 +42,8 @@ class DummyCourse {
                     name = "Variables",
                     description = "Introduction to use of variables",
                     difficulty = "Easy",
-                    noOfChapters = 6
+                    noOfChapters = 6,
+                    unlocked = true
                 ),
                 ModuleInformation(
                     id = 2,
