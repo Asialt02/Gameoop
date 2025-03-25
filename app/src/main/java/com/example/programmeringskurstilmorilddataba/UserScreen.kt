@@ -79,6 +79,7 @@ fun UserUIScreen(navController: NavController) {
                     textAlign = TextAlign.Center,
                 )
                 Spacer(modifier = Modifier.height(16.dp))
+                CourseScreen(courses = courses)
                 ActiveCourseList(db)
 
 
@@ -115,7 +116,6 @@ fun UserProfile(navController: NavController) {
     var userEmail by remember { mutableStateOf("") }
     var userIsAdmin by remember { mutableStateOf(false) }
     var userPassword by remember { mutableStateOf("") }
-
     currentUser?.let {
         db.collection("users").document(it.uid).get()
             .addOnSuccessListener { document ->
