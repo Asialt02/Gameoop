@@ -232,7 +232,7 @@ fun LoginScreen(navController: NavController) {
             onValueChange = { password = it },
             label = { Text("Password") },
             modifier = Modifier.fillMaxWidth(),
-            //visualTransformation = PasswordVisualTransformation()
+            visualTransformation = PasswordVisualTransformation()
         )
 
         Spacer(modifier = Modifier.height(16.dp))
