@@ -105,8 +105,6 @@ fun Data() {
 }
 */
 
-
-
 @Composable
 fun UserProfile(navController: NavController) {
     val auth = FirebaseAuth.getInstance()
@@ -162,6 +160,7 @@ fun UserProfile(navController: NavController) {
         BottomNavBar(navController)
     }
 }
+
 
 fun updateUser(db: FirebaseFirestore, userId: String, userName: String, userEmail: String) {
     val auth = FirebaseAuth.getInstance()
