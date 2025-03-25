@@ -66,5 +66,5 @@ dependencies {
     implementation ("com.google.firebase:firebase-auth")
     implementation("com.squareup.okhttp3:okhttp:4.9.3")
     implementation ("com.google.firebase:firebase-firestore-ktx:24.10.0")
-
+    implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.1")
 }

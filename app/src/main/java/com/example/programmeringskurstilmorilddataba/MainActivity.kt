@@ -9,6 +9,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -16,11 +17,22 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -42,6 +54,7 @@ import com.example.programmeringskurstilmorilddataba.ui.theme.Programmeringskurs
 import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.userProfileChangeRequest
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import okhttp3.Call
 import okhttp3.Callback
@@ -50,50 +63,6 @@ import okhttp3.Request
 import okhttp3.Response
 import org.json.JSONObject
 import java.io.IOException
-//
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.CornerSize
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowRight
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.unit.dp
-import androidx.core.view.MenuProvider
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleOwner
-//import com.example.sprint2.ui.theme.Sprint2Theme
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.IconButton
-import com.google.firebase.firestore.DocumentSnapshot
-import androidx.activity.compose.setContent as setContent
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -107,7 +76,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-//kommentere
 
 @Composable
 fun AppNavigation(modifier: Modifier = Modifier) {
@@ -118,6 +86,8 @@ fun AppNavigation(modifier: Modifier = Modifier) {
     val adminCourseRoute = "adminCourse"
     val userUIRoute = "userUI"
     val userProfileRoute = "userProfile"
+    val userCoursesRoute = "userCourses"
+    val courseModules = "courseModules/{courseName}"
 
     NavHost(
         navController = navController,
@@ -141,6 +111,13 @@ fun AppNavigation(modifier: Modifier = Modifier) {
         }
         composable(userProfileRoute) {
             UserProfile(navController)
+        }
+        composable(userCoursesRoute) {
+            UserCourses(navController)
+        }
+        composable(courseModules) { backStackEntry ->
+            val courseName = backStackEntry.arguments?.getString("courseName") ?: ""
+            CourseModules(navController, courseName)
         }
     }
 }
@@ -485,10 +462,10 @@ fun RegisterScreen(navController: NavController) {
 }
 
 @Composable
-fun BottomNavBar(navController: NavController) {
+fun BottomNavBar(navController: NavController, modifier: Modifier = Modifier) {
     val items = listOf(
         BottomNavItem("Dashboard", "userUI"),
-        BottomNavItem("Courses", "Courses"),
+        BottomNavItem("Courses", "userCourses"),
         BottomNavItem("Profile", "userProfile"),
         BottomNavItem("Friends", "Friends"),
         BottomNavItem("Settings", "Settings")
