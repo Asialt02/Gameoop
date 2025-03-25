@@ -31,8 +31,8 @@ fun SettingsScreen(
     navController: NavController = rememberNavController(),
 ) {
 
-    val changeNameRoute = stringResource(R.string.change_display_name_route)
-    val changePasswordRoute = stringResource(R.string.change_password_route)
+    val changeNameRoute = "ChangeDisplayName"
+    val changePasswordRoute = "ChangePassword"
 
     Column(
         modifier = Modifier.fillMaxSize()

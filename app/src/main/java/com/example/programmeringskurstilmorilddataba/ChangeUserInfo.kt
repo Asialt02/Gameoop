@@ -22,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -29,12 +30,18 @@ import androidx.navigation.compose.rememberNavController
 import com.example.programmeringskurstilmorilddataba.ui.theme.InfoCardColor
 import com.example.programmeringskurstilmorilddataba.ui.theme.PrimaryPurple
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 @Composable
 fun ChangeDisplayNameScreen(
     navController: NavController = rememberNavController(),
     onNameChanged: (String) -> Unit = {}
 ) {
+
+    val auth = FirebaseAuth.getInstance()
+    val db = FirebaseFirestore.getInstance()
+
+    val user = auth.currentUser
 
     var newDisplayName by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -72,13 +79,17 @@ fun ChangeDisplayNameScreen(
                 value = password,
                 onValueChange = { password = it },
                 label = { Text(stringResource(R.string.password)) },
-                modifier = Modifier.fillMaxWidth(0.8f)
+                modifier = Modifier.fillMaxWidth(0.8f),
+                visualTransformation = PasswordVisualTransformation()
             )
 
             Button(
                 onClick = {
                     if (newDisplayName.isNotEmpty()) {
                         onNameChanged(newDisplayName)
+                        val userRef = db.collection("users").document(user?.uid.toString())
+
+                        userRef.update("name", newDisplayName)
                     }
                 }
             ) { Text("Change") }
@@ -136,7 +147,8 @@ fun ChangePasswordScreen(
                 value = password,
                 onValueChange = { password = it },
                 label = { Text(stringResource(R.string.old_password)) },
-                modifier = Modifier.fillMaxWidth(0.8f)
+                modifier = Modifier.fillMaxWidth(0.8f),
+                visualTransformation = PasswordVisualTransformation()
             )
 
             Button(

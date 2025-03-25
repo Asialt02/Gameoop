@@ -56,82 +56,97 @@ fun CoursesScreen(
     var showInfoDialog by remember { mutableStateOf(false) }
     var infoDialogContent by remember { mutableStateOf(CourseInformation()) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(PrimaryPurple)
-            .padding(16.dp)
-    ) {
-        Spacer(modifier = Modifier.height(32.dp))
-        Text(
-            text = stringResource(R.string.all_courses),
-            color = Color.White,
-            style = MaterialTheme.typography.headlineLarge,
-            fontFamily = FontFamily.SansSerif
-        )
 
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(1),
-            contentPadding = PaddingValues(0.dp)
+    Column(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .weight(1f)
+                .background(PrimaryPurple)
+                .padding(16.dp)
         ) {
-            for (course in allCourses) {
-                item {
-                    CourseListItem(
-                        course = course,
-                        onCourseClick = { onCourseClick(course.id) },
-                        showCourseInfo = {
-                            infoDialogContent = course
-                            showInfoDialog = true
-                        },
-                        overlay = {
-                            if(!course.unlocked) {
-                                Row(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(32.dp))
-                                        .background(color = Color(0.5f, 0.5f, 0.5f, 0.5f))
-                                        .matchParentSize(),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.Center
-                                ) {
-                                    Text("+ Unlock")
+            Spacer(modifier = Modifier.height(32.dp))
+            Text(
+                text = stringResource(R.string.all_courses),
+                color = Color.White,
+                style = MaterialTheme.typography.headlineLarge,
+                fontFamily = FontFamily.SansSerif
+            )
+
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(1),
+                contentPadding = PaddingValues(0.dp)
+            ) {
+                for (course in allCourses) {
+                    item {
+                        CourseListItem(
+                            course = course,
+                            onCourseClick = { onCourseClick(course.id) },
+                            showCourseInfo = {
+                                infoDialogContent = course
+                                showInfoDialog = true
+                            },
+                            overlay = {
+                                if (!course.unlocked) {
+                                    Row(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(32.dp))
+                                            .background(color = Color(0.5f, 0.5f, 0.5f, 0.5f))
+                                            .matchParentSize(),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.Center
+                                    ) {
+                                        Text(
+                                            text = "+ Unlock",
+                                            style = MaterialTheme.typography.headlineMedium
+                                        )
+                                    }
                                 }
                             }
-                        }
-                    )
+                        )
+                    }
                 }
             }
-        }
 
-        if (showInfoDialog) {
-            Dialog(onDismissRequest = { showInfoDialog = false }) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth(0.8f)
-                        .padding(vertical = 8.dp)
-                        .clip(RoundedCornerShape(32.dp))
-                        .background(InfoCardColor)
-                        .padding(16.dp)
-                ) {
-                    StandardText(infoDialogContent.name)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = infoDialogContent.description,
-                        color = PrimaryPurple
-                    )
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.End
+            if (showInfoDialog) {
+                Dialog(onDismissRequest = { showInfoDialog = false }) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth(0.8f)
+                            .padding(vertical = 8.dp)
+                            .clip(RoundedCornerShape(32.dp))
+                            .background(InfoCardColor)
+                            .padding(16.dp)
                     ) {
-                        OutlinedButton(onClick = { showInfoDialog = false; onCourseClick(infoDialogContent.id) }) {
-                            Text("Start Course")
-                        }
-                        OutlinedButton(onClick = { showInfoDialog = false }) {
-                            Text("Back")
+                        StandardText(infoDialogContent.name)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = infoDialogContent.description,
+                            color = PrimaryPurple
+                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.End
+                        ) {
+                            OutlinedButton(onClick = {
+                                showInfoDialog = false; onCourseClick(
+                                infoDialogContent.id
+                            )
+                            }) {
+                                Text("Start Course")
+                            }
+                            OutlinedButton(onClick = { showInfoDialog = false }) {
+                                Text("Back")
+                            }
                         }
                     }
                 }
             }
         }
+
+        BottomNavBar(navController)
     }
 }
 
@@ -184,28 +199,35 @@ fun ModulesScreen(
     onModuleClick: (Int) -> Unit = {}
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(PrimaryPurple)
-            .padding(16.dp)
+        modifier = Modifier.fillMaxSize()
     ) {
-        Spacer(modifier = Modifier.height(32.dp))
-
-        Text(
-            text = stringResource(R.string.all_modules),
-            color = Color.White,
-            style = MaterialTheme.typography.headlineLarge,
-            fontFamily = FontFamily.SansSerif
-        )
-
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(1),
-            contentPadding = PaddingValues(4.dp)
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .weight(1f)
+                .background(PrimaryPurple)
+                .padding(16.dp)
         ) {
-            for (module in course.containedModules) {
-                item { ModuleListItem(module) }
+            Spacer(modifier = Modifier.height(32.dp))
+
+            Text(
+                text = stringResource(R.string.all_modules),
+                color = Color.White,
+                style = MaterialTheme.typography.headlineLarge,
+                fontFamily = FontFamily.SansSerif
+            )
+
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(1),
+                contentPadding = PaddingValues(4.dp)
+            ) {
+                for (module in course.containedModules) {
+                    item { ModuleListItem(module) }
+                }
             }
         }
+
+        BottomNavBar(navController)
     }
 }
 

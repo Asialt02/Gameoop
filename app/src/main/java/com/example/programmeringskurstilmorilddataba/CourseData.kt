@@ -83,8 +83,8 @@ class DummyCourse {
         return listOf(
             CourseInformation(
                 id = 1,
-                name = "Test course",
-                description = "For demonstrating UI",
+                name = "First Course",
+                description = "Collection of some basic coding concepts.",
                 noOfModules = 4,
                 unlocked = true,
                 containedModules = listOf(
@@ -104,10 +104,10 @@ class DummyCourse {
                     ),
                     ModuleInformation(
                         id = 3,
-                        name = "The rest",
-                        description = "Every other programming skill",
+                        name = "Objects and Classes",
+                        description = "Introduction to objects as well as some simple classes.",
                         difficulty = "Advanced",
-                        noOfChapters = 3981
+                        noOfChapters = 14
                     )
                 )
             ),
@@ -119,7 +119,6 @@ class DummyCourse {
                 containedModules = listOf(
                     ModuleInformation(
                         id = 4,
-                        name = "Me when i test"
                     ),
                     ModuleInformation(
                         id = 5
