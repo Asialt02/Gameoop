@@ -64,7 +64,7 @@ fun UserUIScreen(navController: NavController) {
                 Log.e("Firestore", "Failed to fetch user name", e)
             }
     }
-
+    
     LaunchedEffect(currentUser) {
         currentUser?.uid?.let { userId ->
             getCoursesUser(db, userId) { fetchedCourses ->
