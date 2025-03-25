@@ -1,14 +1,4 @@
 <resources>
-    <!--AppNavigation Routes-->
-    <string name="login">Login</string>
-    <string name="register">Register</string>
-    <string name="user_screen">User</string>
-    <string name="courses">Courses</string>
-    <string name="modules">Modules</string>
-    <string name="change_display_name_route">ChangeDisplayName</string>
-    <string name="change_password_route">ChangePassword</string>
-    <string name="settings_screen_route">SettingsScreen</string>
-
     <!--MainActivity.kt / Other-->
     <string name="app_name">Programmeringskurs til Morild Data BA</string>
     <string name="logout">Logout</string>

@@ -84,9 +84,9 @@ fun AppNavigation(modifier: Modifier = Modifier) {
     val settingsRoute = "Settings"
 
     val coursesRoute = "Courses"
-    val modulesRoute = stringResource(R.string.modules)
-    val changeNameRoute = stringResource(R.string.change_display_name_route)
-    val changePasswordRoute = stringResource(R.string.change_password_route)
+    val modulesRoute = "Modules"
+    val changeNameRoute = "ChangeDisplayName"
+    val changePasswordRoute = "ChangePassword"
 
     var chosenCourse by remember { mutableStateOf(CourseInformation()) }
 
@@ -120,6 +120,7 @@ fun AppNavigation(modifier: Modifier = Modifier) {
             ChangeDisplayNameScreen(
                 navController,
                 onNameChanged = {newDisplayName ->
+                    println(auth.currentUser?.email)
                     auth.currentUser?.updateProfile(
                         com.google.firebase.auth.userProfileChangeRequest { displayName = newDisplayName }
                     )
@@ -231,7 +232,7 @@ fun LoginScreen(navController: NavController) {
             onValueChange = { password = it },
             label = { Text("Password") },
             modifier = Modifier.fillMaxWidth(),
-            visualTransformation = PasswordVisualTransformation()
+            //visualTransformation = PasswordVisualTransformation()
         )
 
         Spacer(modifier = Modifier.height(16.dp))
