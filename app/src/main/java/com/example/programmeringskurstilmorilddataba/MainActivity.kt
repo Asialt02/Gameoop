@@ -43,6 +43,7 @@ import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.userProfileChangeRequest
 import com.google.firebase.firestore.FirebaseFirestore
+<<<<<<< Updated upstream
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.OkHttpClient
@@ -50,6 +51,10 @@ import okhttp3.Request
 import okhttp3.Response
 import org.json.JSONObject
 import java.io.IOException
+=======
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
+>>>>>>> Stashed changes
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -76,6 +81,14 @@ fun AppNavigation(modifier: Modifier = Modifier) {
     val adminCourseRoute = "adminCourse"
     val userUIRoute = "userUI"
     val userProfileRoute = "userProfile"
+<<<<<<< Updated upstream
+=======
+    val userCoursesRoute = "userCourses"
+    val courseModules = "courseModules/{courseName}"
+    val updateCourse = "updateCourse/{courseName}"
+    val moduleEditorScreen = "moduleEditorScreen/{courseName}/{moduleId}"
+    val chapterViewScreen = "chapterViewScreen/{courseId}/{moduleId}/{chapterId}"
+>>>>>>> Stashed changes
 
     NavHost(
         navController = navController,
@@ -100,6 +113,38 @@ fun AppNavigation(modifier: Modifier = Modifier) {
         composable(userProfileRoute) {
             UserProfile(navController)
         }
+<<<<<<< Updated upstream
+=======
+        composable(userCoursesRoute) {
+            UserCourses(navController)
+        }
+        composable(courseModules) { backStackEntry ->
+            val courseName = backStackEntry.arguments?.getString("courseName") ?: ""
+            CourseModules(navController, courseName)
+        }
+        composable(updateCourse) { backStackEntry ->
+            val courseName = backStackEntry.arguments?.getString("courseName") ?: ""
+            UpdateCourse(navController, courseName)
+        }
+        composable(moduleEditorScreen) { backStackEntry ->
+            val courseId = backStackEntry.arguments?.getString("courseName") ?: ""
+            val moduleId = backStackEntry.arguments?.getString("moduleId") ?: ""
+            ModuleEditorScreen(navController, courseId, moduleId)
+        }
+        composable(
+            chapterViewScreen,
+            arguments = listOf(
+                navArgument("courseName") { type = NavType.StringType },
+                navArgument("moduleId") { type = NavType.StringType },
+                navArgument("chapterId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val courseName = backStackEntry.arguments?.getString("courseName") ?: ""
+            val moduleId = backStackEntry.arguments?.getString("moduleId") ?: ""
+            val chapterId = backStackEntry.arguments?.getString("chapterId") ?: ""
+            ChapterViewScreen(navController, courseName, moduleId, chapterId)
+        }
+>>>>>>> Stashed changes
     }
 }
 

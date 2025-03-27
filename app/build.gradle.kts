@@ -65,5 +65,11 @@ dependencies {
     implementation ("com.google.firebase:firebase-auth")
     implementation("com.squareup.okhttp3:okhttp:4.9.3")
     implementation ("com.google.firebase:firebase-firestore-ktx:24.10.0")
+<<<<<<< Updated upstream
 
+=======
+    implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.1")
+    implementation ("androidx.compose.material3:material3:1.1.1")
+    implementation ("androidx.compose.material3:material3-window-size-class:1.1.1")
+>>>>>>> Stashed changes
 }
