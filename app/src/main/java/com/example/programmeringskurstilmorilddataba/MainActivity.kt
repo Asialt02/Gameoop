@@ -56,6 +56,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.userProfileChangeRequest
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
+import com.example.programmeringskurstilmorilddataba.navigation.Screen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -70,47 +71,74 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@Composable
-fun AppNavigation(modifier: Modifier = Modifier) {
-    val navController = rememberNavController()
 
-    val loginRoute = "Login"
-    val registerRoute = "Register"
-    val adminDashboard = "AdminDashboard"
-    val userUIRoute = "userUI"
-    val userProfileRoute = "userProfile"
-    val userCoursesRoute = "userCourses"
-    val courseModules = "courseModules/{courseName}"
+@Composable
+fun AppNavigation() {
+    val navController = rememberNavController()
 
     NavHost(
         navController = navController,
-        startDestination = loginRoute
+        startDestination = Screen.Login.route
     ) {
-        composable(loginRoute) {
+        // Authentication
+        composable(Screen.Login.route) {
             LoginScreen(navController)
         }
-        composable(registerRoute) {
+        composable(Screen.Register.route) {
             RegisterScreen(navController)
         }
-        composable(adminDashboard) {
+
+        // Admin
+        composable(Screen.AdminDashboard.route) {
             AdminDashboard(navController)
         }
-        composable(userUIRoute) {
+
+        // User
+        composable(Screen.UserUI.route) {
             UserUIScreen(navController)
         }
-        composable("courseScreen/{courseName}") { backStackEntry ->
+        composable(Screen.UserProfile.route) {
+            UserProfile(navController)
+        }
+        composable(Screen.UserCourses.route) {
+            UserCourses(navController)
+        }
+
+        // Course Navigation
+        composable(Screen.CourseScreen.route) { backStackEntry ->
             val courseName = backStackEntry.arguments?.getString("courseName") ?: ""
             CourseScreen(navController, courseName)
         }
-        composable(userProfileRoute) {
-            UserProfile(navController)
-        }
-        composable(userCoursesRoute) {
-            UserCourses(navController)
-        }
-        composable(courseModules) { backStackEntry ->
+
+        composable(Screen.CourseModules.route) { backStackEntry ->
             val courseName = backStackEntry.arguments?.getString("courseName") ?: ""
             CourseModules(navController, courseName)
+        }
+
+        composable(Screen.ModuleEditorScreen.route) { backStackEntry ->
+            val courseName = backStackEntry.arguments?.getString("courseName") ?: ""
+            val moduleId = backStackEntry.arguments?.getString("moduleId") ?: ""
+            ModuleEditorScreen(navController, courseName, moduleId)
+        }
+
+        composable(Screen.ChapterViewScreen.route) { backStackEntry ->
+            val courseId = backStackEntry.arguments?.getString("courseId") ?: ""
+            val moduleId = backStackEntry.arguments?.getString("moduleId") ?: ""
+            val chapterId = backStackEntry.arguments?.getString("chapterId") ?: ""
+            ChapterViewScreen(navController, courseId, moduleId, chapterId)
+        }
+        composable(Screen.TaskOptionsScreen.route) { backStackEntry ->
+            val courseId = backStackEntry.arguments?.getString("courseId") ?: ""
+            val moduleId = backStackEntry.arguments?.getString("moduleId") ?: ""
+            val chapterId = backStackEntry.arguments?.getString("chapterId") ?: ""
+            val taskId = backStackEntry.arguments?.getString("taskId") ?: ""
+            TaskOptionsScreen(
+                navController = navController,
+                courseId = courseId,
+                moduleId = moduleId,
+                chapterId = chapterId,
+                taskId = taskId
+            )
         }
     }
 }
