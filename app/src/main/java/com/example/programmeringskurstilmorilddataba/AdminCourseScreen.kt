@@ -19,8 +19,11 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.DocumentSnapshot
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 import com.google.firebase.firestore.FieldValue
 =======
+=======
+>>>>>>> Stashed changes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
@@ -33,6 +36,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 
 @Composable
@@ -73,6 +79,7 @@ fun AdminCourseScreen(navController: NavController) {
         )
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         Button(onClick = {
             if (courseName.isNotBlank()) {
                 addCourse(db, courseName)
@@ -110,6 +117,35 @@ fun AdminCourseScreen(navController: NavController) {
         }
 
         Button(onClick = {
+=======
+        Row (
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top=24.dp)
+        ){
+            CourseInputDialog()
+
+            Button(onClick = {
+                if (courseName.isNotBlank()) {
+                    navController.navigate("courseScreen/$courseName")
+                } else {
+                    Log.w("AdminCourseScreen", "Course name is empty.")
+                }
+            }) {
+                Text("Get Course")
+            }
+
+            Button(onClick = {
+                auth.signOut()
+                navController.navigate("login")
+            }) {
+                Text("Log Out")
+            }
+        }
+
+        Button(onClick = {
+>>>>>>> Stashed changes
 
         },
             modifier = Modifier
@@ -255,6 +291,7 @@ fun CourseScreen(navController: NavController, courseName: String) {
             Spacer(modifier = Modifier.height(16.dp))
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text("$name: $description")
 
@@ -283,16 +320,26 @@ fun CourseScreen(navController: NavController, courseName: String) {
                     .fillMaxWidth()
                     .padding(start = 50.dp)) {
 
+=======
+                Column(modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 50.dp)) {
+
+>>>>>>> Stashed changes
                     Button(onClick = {
                         if (courseName.isNotBlank()) {
                             navController.navigate("updateCourse/$courseName")
                         } else {
                             Log.w("AdminCourseScreen", "Course name is empty.")
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
                         }
                     ) {
                         Text("Add Module")
                     }
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
 
                     Button(
@@ -302,6 +349,8 @@ fun CourseScreen(navController: NavController, courseName: String) {
                                 courseDescription = course?.getString("description") ?: ""
                             }
                         }
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
                     ) {
@@ -333,6 +382,7 @@ fun CourseScreen(navController: NavController, courseName: String) {
         }
     }
 
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
 
 fun getCourseByName(db: FirebaseFirestore, courseName: String, onResult: (DocumentSnapshot?) -> Unit) {
@@ -386,6 +436,8 @@ fun deleteCourse(db: FirebaseFirestore, courseId: String, onSuccess: () -> Unit)
         }
 }
 =======
+=======
+>>>>>>> Stashed changes
 @Composable
 fun UpdateCourse(navController: NavController, courseName: String) {
     val db = FirebaseFirestore.getInstance()
@@ -1051,4 +1103,7 @@ fun TaskItem(task: Task) {
         }
     }
 }
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes

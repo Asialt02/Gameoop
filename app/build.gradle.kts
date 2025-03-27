@@ -71,5 +71,8 @@ dependencies {
     implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.1")
     implementation ("androidx.compose.material3:material3:1.1.1")
     implementation ("androidx.compose.material3:material3-window-size-class:1.1.1")
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 }

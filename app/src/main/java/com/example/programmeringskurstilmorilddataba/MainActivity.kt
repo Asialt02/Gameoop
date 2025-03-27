@@ -44,6 +44,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.userProfileChangeRequest
 import com.google.firebase.firestore.FirebaseFirestore
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.OkHttpClient
@@ -51,6 +52,10 @@ import okhttp3.Request
 import okhttp3.Response
 import org.json.JSONObject
 import java.io.IOException
+=======
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
+>>>>>>> Stashed changes
 =======
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
@@ -88,6 +93,9 @@ fun AppNavigation(modifier: Modifier = Modifier) {
     val updateCourse = "updateCourse/{courseName}"
     val moduleEditorScreen = "moduleEditorScreen/{courseName}/{moduleId}"
     val chapterViewScreen = "chapterViewScreen/{courseId}/{moduleId}/{chapterId}"
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 
     NavHost(
@@ -144,6 +152,9 @@ fun AppNavigation(modifier: Modifier = Modifier) {
             val chapterId = backStackEntry.arguments?.getString("chapterId") ?: ""
             ChapterViewScreen(navController, courseName, moduleId, chapterId)
         }
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
     }
 }
