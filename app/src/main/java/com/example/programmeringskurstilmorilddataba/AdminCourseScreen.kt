@@ -11,10 +11,9 @@ import androidx.navigation.NavController
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.DocumentSnapshot
-import com.google.firebase.firestore.FieldValue
 
 @Composable
-fun AdminCourseScreen(navController: NavController) {
+fun AdminDashboard(navController: NavController) {
     val auth = FirebaseAuth.getInstance()
     val db = FirebaseFirestore.getInstance()
     val currentUser = auth.currentUser
@@ -44,15 +43,7 @@ fun AdminCourseScreen(navController: NavController) {
             modifier = Modifier.fillMaxWidth()
         )
 
-        Button(onClick = {
-            if (courseName.isNotBlank()) {
-                addCourse(db, courseName)
-            } else {
-                Log.w("AdminCourseScreen", "Course name or description is empty.")
-            }
-        }) {
-            Text("Add Course")
-        }
+        CourseInputDialog()
 
         Button(onClick = {
             if (courseName.isNotBlank()) {
@@ -75,12 +66,82 @@ fun AdminCourseScreen(navController: NavController) {
 }
 
 @Composable
+fun CourseInputDialog() {
+    var showDialog by remember { mutableStateOf(false) }
+
+    var courseId by remember { mutableStateOf("") }
+    var courseDescription by remember { mutableStateOf("") }
+
+    Button(
+        onClick = { showDialog = true },
+        modifier = Modifier.padding(16.dp)
+    ) {
+        Text("Add Course")
+    }
+
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                showDialog = false
+                courseId = ""
+                courseDescription = ""
+            },
+            title = { Text("Add New Course") },
+            text = {
+                Column {
+                    OutlinedTextField(
+                        value = courseId,
+                        onValueChange = { courseId = it },
+                        label = { Text("Course ID *") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    OutlinedTextField(
+                        value = courseDescription,
+                        onValueChange = { courseDescription = it },
+                        label = { Text("Description *") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = false
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        addCourse(courseId, courseDescription)
+                        showDialog = false
+                        courseId = ""
+                        courseDescription = ""
+                    },
+                    enabled = courseId.isNotBlank()
+                ) {
+                    Text("Add")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        showDialog = false
+                        courseId = ""
+                        courseDescription = ""
+                    }
+                ) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}
+
+@Composable
 fun CourseScreen(navController: NavController, courseName: String) {
     val db = FirebaseFirestore.getInstance()
     var course by remember { mutableStateOf<DocumentSnapshot?>(null) }
     var newModule by remember { mutableStateOf("") }
-    var courseDescription by remember { mutableStateOf("") }
-    var courseIdToUpdate by remember { mutableStateOf("") }
+    var moduleId by remember { mutableStateOf("") }
+    var moduleNames by remember { mutableStateOf(emptyList<String>()) }
+    var isLoading by remember { mutableStateOf(true) }
+    var error by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(courseName) {
         getCourseByName(db, courseName) { fetchedCourse ->
@@ -105,30 +166,50 @@ fun CourseScreen(navController: NavController, courseName: String) {
             })
             {Text("Head Back")}
         } else {
-            val name = course!!.getString("courseName") ?: "Unknown"
-            val description = course!!.getString("description") ?: "No Description"
-            val modules = course!!.get("modules") as? List<String> ?: emptyList()
+            val name = course!!.getString("courseName")
+            val description = course!!.getString("courseDescription")
 
-            Text(text = "Course Name: $name", style = MaterialTheme.typography.headlineMedium)
-            Text(text = "Description: $description", style = MaterialTheme.typography.bodyLarge)
+            db.collection("courses")
+                .document(courseName)
+                .collection("modules")
+                .get()
+                .addOnSuccessListener { querySnapshot ->
+                    val names = querySnapshot.documents.mapNotNull { it.getString("name") }
+                    moduleNames = names
+                }
+                .addOnFailureListener { e ->
+                    error = "Failed to load course: ${e.message}"
+                    isLoading = false
+                }
+
+            Text(text = "$name",
+                style = MaterialTheme.typography.headlineMedium,
+                modifier = Modifier.padding(16.dp, vertical = 4.dp))
+            Text(text = "$description",
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier.padding(16.dp, vertical = 4.dp))
 
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(text = "Modules:", style = MaterialTheme.typography.headlineSmall)
-            modules.forEach { module ->
-                Text(text = "- $module", style = MaterialTheme.typography.bodyMedium)
+            moduleNames.forEach { module ->
+                Text(text = "- $module",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(vertical = 4.dp))
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
                 Column(modifier = Modifier.fillMaxWidth()) {
-                    Text("$name: $description")
 
-                    if (modules.isNotEmpty()) {
-                        Text("Modules: ${modules.joinToString(", ")}")
-                    } else {
-                        Text("No modules added yet.")
-                    }
+                    OutlinedTextField(
+                        value = moduleId,
+                        onValueChange = { moduleId = it },
+                        label = { Text("Module ID") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     OutlinedTextField(
                         value = newModule,
@@ -137,28 +218,32 @@ fun CourseScreen(navController: NavController, courseName: String) {
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    Button(
-                        onClick = {
-                            course?.id?.let { id ->
-                                if (newModule.isNotBlank()) {
-                                    addModuleToCourse(db, id, newModule)
+                    Row {
+                        Button(
+                            onClick = {
+                                course?.id?.let { id ->
+                                    if (newModule.isNotBlank() && moduleId.isNotBlank()) {
+                                        addModuleToCourse(db, id, newModule, moduleId)
+                                    }
                                 }
                             }
+                        ) {
+                            Text("Add Module")
                         }
-                    ) {
-                        Text("Add Module")
+
+                        Button(
+                            onClick = {
+
+                            }
+                        ){
+                            Text("Edit module",
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.padding( ))
+                        }
                     }
 
-                    Button(
-                        onClick = {
-                            course?.id?.let { id ->
-                                courseIdToUpdate = id
-                                courseDescription = course?.getString("description") ?: ""
-                            }
-                        }
-                    ) {
-                        Text("Update Course")
-                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+
 
                     Button(
                         onClick = {
@@ -182,55 +267,3 @@ fun CourseScreen(navController: NavController, courseName: String) {
 
         }
     }
-
-
-fun getCourseByName(db: FirebaseFirestore, courseName: String, onResult: (DocumentSnapshot?) -> Unit) {
-    db.collection("courses")
-        .whereEqualTo("courseName", courseName)
-        .get()
-        .addOnSuccessListener { querySnapshot ->
-            if (!querySnapshot.isEmpty) {
-                onResult(querySnapshot.documents.first())
-            } else {
-                onResult(null)
-            }
-        }
-        .addOnFailureListener { e ->
-            Log.w("Firestore", "Error fetching course by name", e)
-            onResult(null)
-        }
-}
-
-fun addCourse(db: FirebaseFirestore, courseName: String) {
-    val course = hashMapOf(
-        "courseName" to courseName,
-        "modules" to listOf<String>() // Initialize an empty list for modules
-    ) as MutableMap<String, Any>
-
-    db.collection("courses").add(course)
-        .addOnSuccessListener {
-            Log.d("Firestore", "Course Added")
-        }
-        .addOnFailureListener { e ->
-            Log.w("Firestore", "Error while saving Course", e)
-        }
-}
-
-fun addModuleToCourse(db: FirebaseFirestore, courseId: String, newModule: String) {
-    db.collection("courses").document(courseId).update(
-        "modules", FieldValue.arrayUnion(newModule) // Add module to the "modules" array
-    )
-        .addOnSuccessListener { Log.d("Firestore", "Module Added") }
-        .addOnFailureListener { e -> Log.w("Firestore", "Error while adding module", e) }
-}
-
-fun deleteCourse(db: FirebaseFirestore, courseId: String, onSuccess: () -> Unit) {
-    db.collection("courses").document(courseId).delete()
-        .addOnSuccessListener {
-            Log.d("Firestore", "Course Deleted")
-            onSuccess()  // Call the success handler to navigate
-        }
-        .addOnFailureListener { e ->
-            Log.w("Firestore", "Error while deleting Course", e)
-        }
-}
