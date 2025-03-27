@@ -20,8 +20,11 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.DocumentSnapshot
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 import com.google.firebase.firestore.FieldValue
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 import androidx.compose.material.icons.Icons
@@ -37,6 +40,9 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -80,6 +86,7 @@ fun AdminCourseScreen(navController: NavController) {
 
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         Button(onClick = {
             if (courseName.isNotBlank()) {
                 addCourse(db, courseName)
@@ -117,6 +124,35 @@ fun AdminCourseScreen(navController: NavController) {
         }
 
         Button(onClick = {
+=======
+        Row (
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top=24.dp)
+        ){
+            CourseInputDialog()
+
+            Button(onClick = {
+                if (courseName.isNotBlank()) {
+                    navController.navigate("courseScreen/$courseName")
+                } else {
+                    Log.w("AdminCourseScreen", "Course name is empty.")
+                }
+            }) {
+                Text("Get Course")
+            }
+
+            Button(onClick = {
+                auth.signOut()
+                navController.navigate("login")
+            }) {
+                Text("Log Out")
+            }
+        }
+
+        Button(onClick = {
+>>>>>>> Stashed changes
 =======
         Row (
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -292,6 +328,7 @@ fun CourseScreen(navController: NavController, courseName: String) {
 
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text("$name: $description")
 
@@ -326,12 +363,21 @@ fun CourseScreen(navController: NavController, courseName: String) {
                     .padding(start = 50.dp)) {
 
 >>>>>>> Stashed changes
+=======
+                Column(modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 50.dp)) {
+
+>>>>>>> Stashed changes
                     Button(onClick = {
                         if (courseName.isNotBlank()) {
                             navController.navigate("updateCourse/$courseName")
                         } else {
                             Log.w("AdminCourseScreen", "Course name is empty.")
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -339,6 +385,7 @@ fun CourseScreen(navController: NavController, courseName: String) {
                     ) {
                         Text("Add Module")
                     }
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 
@@ -349,6 +396,8 @@ fun CourseScreen(navController: NavController, courseName: String) {
                                 courseDescription = course?.getString("description") ?: ""
                             }
                         }
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======
@@ -382,6 +431,7 @@ fun CourseScreen(navController: NavController, courseName: String) {
         }
     }
 
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 
@@ -436,6 +486,8 @@ fun deleteCourse(db: FirebaseFirestore, courseId: String, onSuccess: () -> Unit)
         }
 }
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 @Composable
@@ -1104,6 +1156,9 @@ fun TaskItem(task: Task) {
     }
 }
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
