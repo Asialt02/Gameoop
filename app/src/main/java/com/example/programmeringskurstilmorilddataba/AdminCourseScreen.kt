@@ -587,6 +587,8 @@ fun ChapterViewScreen(
     var showEditIntroDialog by remember { mutableStateOf(false) }
     var editedIntro by remember { mutableStateOf("") }
     var newTaskQuestion by remember { mutableStateOf("") }
+    var showEditTaskDialog by remember { mutableStateOf<Task?>(null) }
+    var editedTaskQuestion by remember { mutableStateOf("") }
 
     LaunchedEffect(chapterId) {
         db.collection("courses")
@@ -619,7 +621,8 @@ fun ChapterViewScreen(
                     Task(
                         id = doc.id,
                         question = doc.getString("question") ?: "",
-                        options = emptyList()
+                        type = TaskType.fromString(doc.getString("type") ?: "Multiple Choice"),
+                        options = emptyList() // You might want to load options here
                     )
                 } ?: emptyList()
             }
@@ -695,7 +698,10 @@ fun ChapterViewScreen(
                         itemsIndexed(tasks) { index, task ->
                             TaskItem(
                                 task = task,
-                                onEdit = { /* Edit functionality */ },
+                                onEdit = { taskToEdit ->
+                                    editedTaskQuestion = taskToEdit.question
+                                    showEditTaskDialog = taskToEdit
+                                },
                                 onDelete = {
                                     db.collection("courses")
                                         .document(courseId)
@@ -756,36 +762,44 @@ fun ChapterViewScreen(
         }
     }
 
-    if (showEditIntroDialog) {
+    if (showEditTaskDialog != null) {
         AlertDialog(
-            onDismissRequest = { showEditIntroDialog = false },
-            title = { Text("Edit Introduction") },
+            onDismissRequest = { showEditTaskDialog = null },
+            title = { Text("Edit Task") },
             text = {
-                OutlinedTextField(
-                    value = editedIntro,
-                    onValueChange = { editedIntro = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Introduction") }
-                )
+                Column {
+                    OutlinedTextField(
+                        value = editedTaskQuestion,
+                        onValueChange = { editedTaskQuestion = it },
+                        label = { Text("Task Question") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             },
             confirmButton = {
                 Button(
                     onClick = {
-                        db.collection("courses")
-                            .document(courseId)
-                            .collection("modules")
-                            .document(moduleId)
-                            .collection("chapters")
-                            .document(chapterId)
-                            .update("introduction", editedIntro)
-                        showEditIntroDialog = false
+                        showEditTaskDialog?.let { task ->
+                            db.collection("courses")
+                                .document(courseId)
+                                .collection("modules")
+                                .document(moduleId)
+                                .collection("chapters")
+                                .document(chapterId)
+                                .collection("tasks")
+                                .document(task.id)
+                                .update("question", editedTaskQuestion)
+                                .addOnSuccessListener {
+                                    showEditTaskDialog = null
+                                }
+                        }
                     }
                 ) {
                     Text("Save")
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showEditIntroDialog = false }) {
+                TextButton(onClick = { showEditTaskDialog = null }) {
                     Text("Cancel")
                 }
             }
@@ -796,7 +810,7 @@ fun ChapterViewScreen(
 @Composable
 fun TaskItem(
     task: Task,
-    onEdit: () -> Unit,
+    onEdit: (Task) -> Unit,
     onDelete: () -> Unit,
     onNavigateToOptions: () -> Unit
 ) {
@@ -804,7 +818,6 @@ fun TaskItem(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp)
-            .clickable(onClick = onNavigateToOptions)
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
@@ -813,9 +826,11 @@ fun TaskItem(
             Text(
                 text = task.question,
                 style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable(onClick = onNavigateToOptions)
             )
-            IconButton(onClick = onEdit) {
+            IconButton(onClick = { onEdit(task) }) {
                 Icon(Icons.Default.Edit, "Edit task")
             }
             IconButton(onClick = onDelete) {
@@ -929,6 +944,8 @@ fun TaskOptionsScreen(
     var error by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     var taskQuestion by remember { mutableStateOf("") }
+    var showEditOptionDialog by remember { mutableStateOf<Pair<Int, String>?>(null) }
+    var editedOptionText by remember { mutableStateOf("") }
 
     LaunchedEffect(taskId) {
         try {
@@ -968,6 +985,49 @@ fun TaskOptionsScreen(
                     }
                 }
             )
+        },
+        bottomBar = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                OutlinedTextField(
+                    value = newOptionText,
+                    onValueChange = { newOptionText = it },
+                    label = { Text("New option text") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(
+                    onClick = {
+                        if (newOptionText.isNotBlank()) {
+                            val updatedOptions = options + (newOptionText to false)
+                            scope.launch {
+                                try {
+                                    saveOptions(
+                                        db = db,
+                                        courseId = courseId,
+                                        moduleId = moduleId,
+                                        chapterId = chapterId,
+                                        taskId = taskId,
+                                        taskQuestion = taskQuestion,
+                                        options = updatedOptions
+                                    )
+                                    options = updatedOptions
+                                    newOptionText = ""
+                                } catch (e: Exception) {
+                                    error = "Failed to add option: ${e.message}"
+                                }
+                            }
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = newOptionText.isNotBlank()
+                ) {
+                    Text("Add Option")
+                }
+            }
         }
     ) { padding ->
         if (isLoading) {
@@ -984,7 +1044,6 @@ fun TaskOptionsScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
-                    .padding(16.dp)
             ) {
                 error?.let {
                     Text(
@@ -997,10 +1056,12 @@ fun TaskOptionsScreen(
                 Text(
                     text = taskQuestion,
                     style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(bottom = 16.dp)
+                    modifier = Modifier.padding(16.dp)
                 )
 
-                LazyColumn(modifier = Modifier.weight(1f)) {
+                LazyColumn(
+                    modifier = Modifier.weight(1f)
+                ) {
                     itemsIndexed(options) { index, (option, isCorrect) ->
                         OptionItem(
                             option = option,
@@ -1038,49 +1099,63 @@ fun TaskOptionsScreen(
                                     )
                                     options = updatedOptions
                                 }
+                            },
+                            onEdit = {
+                                editedOptionText = option
+                                showEditOptionDialog = index to option
                             }
                         )
                     }
                 }
+            }
+        }
+    }
 
+    if (showEditOptionDialog != null) {
+        AlertDialog(
+            onDismissRequest = { showEditOptionDialog = null },
+            title = { Text("Edit Option") },
+            text = {
                 OutlinedTextField(
-                    value = newOptionText,
-                    onValueChange = { newOptionText = it },
-                    label = { Text("New option text") },
+                    value = editedOptionText,
+                    onValueChange = { editedOptionText = it },
+                    label = { Text("Option Text") },
                     modifier = Modifier.fillMaxWidth()
                 )
-
+            },
+            confirmButton = {
                 Button(
                     onClick = {
-                        if (newOptionText.isNotBlank()) {
-                            val updatedOptions = options + (newOptionText to false)
+                        showEditOptionDialog?.let { (index, _) ->
+                            val updatedOptions = options.toMutableList().apply {
+                                this[index] = editedOptionText to this[index].second
+                            }
                             scope.launch {
-                                try {
-                                    saveOptions(
-                                        db = db,
-                                        courseId = courseId,
-                                        moduleId = moduleId,
-                                        chapterId = chapterId,
-                                        taskId = taskId,
-                                        taskQuestion = taskQuestion,
-                                        options = updatedOptions
-                                    )
+                                saveOptions(
+                                    db = db,
+                                    courseId = courseId,
+                                    moduleId = moduleId,
+                                    chapterId = chapterId,
+                                    taskId = taskId,
+                                    taskQuestion = taskQuestion,
                                     options = updatedOptions
-                                    newOptionText = ""
-                                } catch (e: Exception) {
-                                    error = "Failed to add option: ${e.message}"
-                                }
+                                )
+                                options = updatedOptions
+                                showEditOptionDialog = null
                             }
                         }
                     },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp)
+                    enabled = editedOptionText.isNotBlank()
                 ) {
-                    Text("Add Option")
+                    Text("Save")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEditOptionDialog = null }) {
+                    Text("Cancel")
                 }
             }
-        }
+        )
     }
 }
 
@@ -1089,7 +1164,8 @@ fun OptionItem(
     option: String,
     isCorrect: Boolean,
     onToggleCorrect: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onEdit: () -> Unit
 ) {
     Card(
         modifier = Modifier
@@ -1108,6 +1184,9 @@ fun OptionItem(
                 text = option,
                 modifier = Modifier.weight(1f)
             )
+            IconButton(onClick = onEdit) {  // Add edit button
+                Icon(Icons.Default.Edit, "Edit option")
+            }
             IconButton(onClick = onDelete) {
                 Icon(Icons.Default.Delete, "Delete")
             }
@@ -1157,6 +1236,7 @@ data class Chapter(
 data class Task(
     val id: String,
     val question: String,
+    val type: TaskType = TaskType.MultipleChoice,
     val options: List<Option> = emptyList()
 )
 
@@ -1209,4 +1289,21 @@ fun addModuleToCourse(
             "createdAt" to FieldValue.serverTimestamp()
         ))
         .addOnCompleteListener { onComplete(it.exception) }
+}
+
+sealed class TaskType(val typeName: String) {
+    object MultipleChoice : TaskType("Multiple Choice")
+    object DropDown : TaskType("Drop Down")
+    object YesNo : TaskType("Yes/No")
+
+    companion object {
+        fun fromString(type: String): TaskType {
+            return when(type) {
+                "Multiple Choice" -> MultipleChoice
+                "Drop Down" -> DropDown
+                "Yes/No" -> YesNo
+                else -> MultipleChoice
+            }
+        }
+    }
 }
