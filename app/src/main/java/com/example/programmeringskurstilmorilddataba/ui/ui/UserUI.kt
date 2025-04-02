@@ -1,4 +1,4 @@
-package com.example.programmeringskurstilmorilddataba
+package com.example.programmeringskurstilmorilddataba.ui.ui
 
 import android.util.Log
 import com.google.firebase.auth.FirebaseAuth

@@ -50,6 +50,10 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.programmeringskurstilmorilddataba.data.BottomNavItem
+import com.example.programmeringskurstilmorilddataba.data.checkEmailValidity
+import com.example.programmeringskurstilmorilddataba.data.sendPasswordResetEmail
+import com.example.programmeringskurstilmorilddataba.navigation.AppNavigation
 import com.example.programmeringskurstilmorilddataba.ui.theme.ProgrammeringskursTilMorildDataBATheme
 import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
@@ -57,6 +61,14 @@ import com.google.firebase.auth.ktx.userProfileChangeRequest
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.example.programmeringskurstilmorilddataba.navigation.Screen
+import com.example.programmeringskurstilmorilddataba.ui.ui.AdminDashboard
+import com.example.programmeringskurstilmorilddataba.ui.ui.ChapterViewScreen
+import com.example.programmeringskurstilmorilddataba.ui.ui.CourseModules
+import com.example.programmeringskurstilmorilddataba.ui.ui.ModuleEditorScreen
+import com.example.programmeringskurstilmorilddataba.ui.ui.TaskOptionsScreen
+import com.example.programmeringskurstilmorilddataba.ui.ui.UserCourses
+import com.example.programmeringskurstilmorilddataba.ui.ui.UserProfile
+import com.example.programmeringskurstilmorilddataba.ui.ui.UserUIScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -65,459 +77,25 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             ProgrammeringskursTilMorildDataBATheme {
-                AppNavigation()
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ){
+                    AppNavigation()
+                }
+
             }
         }
     }
 }
 
 
-@Composable
-fun AppNavigation() {
-    val navController = rememberNavController()
-
-    NavHost(
-        navController = navController,
-        startDestination = Screen.Login.route
-    ) {
-        // Authentication
-        composable(Screen.Login.route) {
-            LoginScreen(navController)
-        }
-        composable(Screen.Register.route) {
-            RegisterScreen(navController)
-        }
-
-        // Admin
-        composable(Screen.AdminDashboard.route) {
-            AdminDashboard(navController)
-        }
-
-        // User
-        composable(Screen.UserUI.route) {
-            UserUIScreen(navController)
-        }
-        composable(Screen.UserProfile.route) {
-            UserProfile(navController)
-        }
-        composable(Screen.UserCourses.route) {
-            UserCourses(navController)
-        }
-
-        // Course Navigation
-        composable(Screen.CourseScreen.route) { backStackEntry ->
-            val courseName = backStackEntry.arguments?.getString("courseName") ?: ""
-            CourseScreen(navController, courseName)
-        }
-
-        composable(Screen.CourseModules.route) { backStackEntry ->
-            val courseName = backStackEntry.arguments?.getString("courseName") ?: ""
-            CourseModules(navController, courseName)
-        }
-
-        composable(Screen.ModuleEditorScreen.route) { backStackEntry ->
-            val courseName = backStackEntry.arguments?.getString("courseName") ?: ""
-            val moduleId = backStackEntry.arguments?.getString("moduleId") ?: ""
-            ModuleEditorScreen(navController, courseName, moduleId)
-        }
-
-        composable(Screen.ChapterViewScreen.route) { backStackEntry ->
-            val courseId = backStackEntry.arguments?.getString("courseId") ?: ""
-            val moduleId = backStackEntry.arguments?.getString("moduleId") ?: ""
-            val chapterId = backStackEntry.arguments?.getString("chapterId") ?: ""
-            ChapterViewScreen(navController, courseId, moduleId, chapterId)
-        }
-        composable(Screen.TaskOptionsScreen.route) { backStackEntry ->
-            val courseId = backStackEntry.arguments?.getString("courseId") ?: ""
-            val moduleId = backStackEntry.arguments?.getString("moduleId") ?: ""
-            val chapterId = backStackEntry.arguments?.getString("chapterId") ?: ""
-            val taskId = backStackEntry.arguments?.getString("taskId") ?: ""
-            TaskOptionsScreen(
-                navController = navController,
-                courseId = courseId,
-                moduleId = moduleId,
-                chapterId = chapterId,
-                taskId = taskId
-            )
-        }
-    }
-}
-
-@Composable
-fun LoginScreen(navController: NavController) {
-    val auth = FirebaseAuth.getInstance()
-    val db = FirebaseFirestore.getInstance()
-
-    var email by remember { mutableStateOf(TextFieldValue()) }
-    var password by remember { mutableStateOf(TextFieldValue()) }
-    var errorMessage by remember { mutableStateOf("") }
-    var showForgotPasswordDialog by remember { mutableStateOf(false) }
-
-    fun loginUser(email: String, password: String) {
-        auth.signInWithEmailAndPassword(email, password)
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    val user = auth.currentUser
-                    user?.let {
-                        db.collection("users").document(it.uid).get()
-                            .addOnSuccessListener { document ->
-                                if (document.exists()) {
-                                    val isAdmin = document.getBoolean("isAdmin") ?: false
-                                    if (isAdmin) {
-                                        navController.navigate("adminDashboard")
-                                    } else {
-                                        navController.navigate("userUI")
-                                    }
-                                } else {
-                                    errorMessage = "User data not found."
-                                }
-                            }
-                            .addOnFailureListener { e ->
-                                errorMessage = "Failed to fetch user data: ${e.message}"
-                            }
-                    }
-                } else {
-                    errorMessage = "Login failed: ${task.exception?.message}"
-                }
-            }
-    }
 
 
 
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text(
-            text = "Gameoop!",
-            style = MaterialTheme.typography.displayLarge,
-            modifier = Modifier.padding(bottom = 32.dp)
-        )
-
-        // Login Text
-        Text(
-            text = "Login",
-            style = MaterialTheme.typography.displaySmall,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
-
-        OutlinedTextField(
-            value = email,
-            onValueChange = { email = it },
-            label = { Text("E-mail") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        OutlinedTextField(
-            value = password,
-            onValueChange = { password = it },
-            label = { Text("Password") },
-            modifier = Modifier.fillMaxWidth(),
-            visualTransformation = PasswordVisualTransformation()
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Button(
-            onClick = { loginUser(email.text, password.text) },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Log in")
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = "Forgot password?",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.clickable {
-                showForgotPasswordDialog = true
-            }
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // No Account? Join Now! Text
-        Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "No account? ",
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Text(
-                text = "Join now!",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.clickable {
-                    navController.navigate("register")
-                }
-            )
-        }
-
-        // Error Message
-        if (errorMessage.isNotEmpty()) {
-            Text(
-                text = errorMessage,
-                color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.padding(top = 16.dp)
-            )
-        }
-    }
-
-    // Forgot Password Dialog
-    if (showForgotPasswordDialog) {
-        AlertDialog(
-            onDismissRequest = { showForgotPasswordDialog = false },
-            title = { Text("Forgot Password") },
-            text = {
-                Column {
-                    Text("Enter your email address to receive a password reset link.")
-                    Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = email,
-                        onValueChange = { email = it },
-                        label = { Text("Email") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        if (email.text.isNotBlank()) {
-                            sendPasswordResetEmail(email.text) { success, message ->
-                                if (success) {
-                                    errorMessage = message
-                                    showForgotPasswordDialog = false
-                                } else {
-                                    errorMessage = message
-                                }
-                            }
-                        } else {
-                            errorMessage = "Please enter your email address."
-                        }
-                    }
-                ) {
-                    Text("Send")
-                }
-            },
-            dismissButton = {
-                Button(
-                    onClick = { showForgotPasswordDialog = false }
-                ) {
-                    Text("Cancel")
-                }
-            }
-        )
-    }
-}
-
-@Composable
-fun RegisterScreen(navController: NavController) {
-    var fullName by remember { mutableStateOf(TextFieldValue()) }
-    var email by remember { mutableStateOf(TextFieldValue()) }
-    var password by remember { mutableStateOf(TextFieldValue()) }
-    var errorMessage by remember { mutableStateOf("") }
-    val invalidEmailMessage = "Invalid Email!"
-
-    fun registerUser(fullName: String, email: String, password: String) {
-        val auth = FirebaseAuth.getInstance()
-        val db = FirebaseFirestore.getInstance()
-
-        db.collection("users")
-            .whereEqualTo("email", email)
-            .get()
-            .addOnSuccessListener {
-                    errorMessage = "This email is already registered. Please try logging in."
-            }
-            .addOnFailureListener {
-                auth.createUserWithEmailAndPassword(email, password)
-                    .addOnCompleteListener { task ->
-                        if (task.isSuccessful) {
-                            val user = auth.currentUser
-                            val profileUpdates = userProfileChangeRequest {
-                                displayName = fullName
-                            }
-
-                            user?.updateProfile(profileUpdates)?.addOnCompleteListener { profileTask ->
-                                if (profileTask.isSuccessful) {
-                                    val userData = hashMapOf(
-                                        "name" to fullName,
-                                        "email" to email,
-                                        "isAdmin" to false
-                                    )
-
-                                    db.collection("users").document(user.uid)
-                                        .set(userData)
-                                        .addOnSuccessListener {
-                                            errorMessage = "Registration successful!"
-                                        }
-                                        .addOnFailureListener { e ->
-                                            errorMessage = "Failed to save user data: ${e.message}"
-                                        }
-                                } else {
-                                    errorMessage = "Failed to update profile: ${profileTask.exception?.message}"
-                                }
-                            }
-                        } else {
-                            errorMessage = "Registration failed: ${task.exception?.message}"
-                        }
-                    }
-            }
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        // Gameoop! Text
-        Text(
-            text = "Gameoop!",
-            style = MaterialTheme.typography.headlineLarge,
-            modifier = Modifier.padding(bottom = 32.dp)
-        )
-
-        // Register Text
-        Text(
-            text = "Register",
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
-
-        // Username Input
-        OutlinedTextField(
-            value = fullName,
-            onValueChange = { fullName = it },
-            label = { Text("Username") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Email Input
-        OutlinedTextField(
-            value = email,
-            onValueChange = { email = it },
-            label = { Text("Email") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Password Input
-        OutlinedTextField(
-            value = password,
-            onValueChange = { password = it },
-            label = { Text("Password") },
-            modifier = Modifier.fillMaxWidth(),
-            visualTransformation = PasswordVisualTransformation()
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Register Button
-        Button(
-            onClick = {
-                checkEmailValidity(email.text) { isValid ->
-                    if (isValid) {
-                        registerUser(fullName.text, email.text, password.text)
-                    } else {
-                        errorMessage = invalidEmailMessage
-                    }
-                }
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Register")
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Button(
-            onClick = {
-                navController.navigate("login")
-            },
-            modifier = Modifier.fillMaxWidth()
-        ){
-            Text("Return to Login")
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Terms of Service Text
-        Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Terms of Service? ",
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Text(
-                text = "Read more",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.clickable {
-                }
-            )
-        }
-
-        // Error Message
-        if (errorMessage.isNotEmpty()) {
-            Text(
-                text = errorMessage,
-                color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.padding(top = 16.dp)
-            )
-        }
-    }
-}
-
-@Composable
-fun BottomNavBar(navController: NavController, modifier: Modifier = Modifier) {
-    val items = listOf(
-        BottomNavItem("Dashboard", "userUI"),
-        BottomNavItem("Courses", "userCourses"),
-        BottomNavItem("Profile", "userProfile"),
-        BottomNavItem("Friends", "Friends"),
-        BottomNavItem("Settings", "Settings")
-    )
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.primary,
-                shape = RoundedCornerShape(32.dp, 32.dp, 0.dp, 0.dp))
-            .padding(8.dp),
-        horizontalArrangement = Arrangement.SpaceAround
-    ) {
-        items.forEach { item ->
-            Text(
-                text = item.title,
-                color = Color.White,
-                modifier = Modifier
-                    .clickable {
-                        navController.navigate(item.route) {
-                            popUpTo(navController.graph.startDestinationId)
-                            launchSingleTop = true
-                        }
-                    }
-                    .padding(8.dp),
-                style = MaterialTheme.typography.bodyMedium
-            )
-        }
-    }
-}
 ///San kode
+/*
 @Composable
 fun CourseScreen(courses: List<DocumentSnapshot>) {
     Column(
@@ -665,7 +243,7 @@ fun ProgressCard() {
         }
     }
 }
-
+*/
 @Preview(showBackground = true)
 @Composable
 fun Preview() {

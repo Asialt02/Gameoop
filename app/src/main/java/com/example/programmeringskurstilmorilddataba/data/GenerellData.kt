@@ -1,4 +1,4 @@
-package com.example.programmeringskurstilmorilddataba
+package com.example.programmeringskurstilmorilddataba.data
 
 import com.google.firebase.auth.FirebaseAuth
 import okhttp3.Call
