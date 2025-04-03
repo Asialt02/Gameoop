@@ -1,6 +1,7 @@
 package com.example.programmeringskurstilmorilddataba.ui.ui
 
 import android.util.Log
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -48,6 +49,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import com.example.programmeringskurstilmorilddataba.navigation.Screen
 import com.google.firebase.auth.FirebaseAuth
@@ -590,6 +592,9 @@ fun ChapterViewScreen(
     var showEditTaskDialog by remember { mutableStateOf<Task?>(null) }
     var editedTaskQuestion by remember { mutableStateOf("") }
 
+    var showTaskTypeDialog by remember { mutableStateOf(false) }
+    var newTaskType by remember { mutableStateOf("Multiple Choice") }
+
     LaunchedEffect(chapterId) {
         db.collection("courses")
             .document(courseId)
@@ -734,28 +739,42 @@ fun ChapterViewScreen(
                         label = { Text("New Task Question") },
                         modifier = Modifier.fillMaxWidth()
                     )
-                    Button(
-                        onClick = {
-                            if (newTaskQuestion.isNotBlank()) {
-                                val newTaskId = "task${System.currentTimeMillis()}"
-                                db.collection("courses")
-                                    .document(courseId)
-                                    .collection("modules")
-                                    .document(moduleId)
-                                    .collection("chapters")
-                                    .document(chapterId)
-                                    .collection("tasks")
-                                    .document(newTaskId)
-                                    .set(mapOf(
-                                        "question" to newTaskQuestion
-                                    ))
-                                    .addOnSuccessListener {
-                                        newTaskQuestion = ""
-                                    }
+                    Text(
+                        text = "Task type: $newTaskType"
+                    )
+                    Row {
+                        Button(
+                            onClick = {
+                                if (newTaskQuestion.isNotBlank()) {
+                                    val newTaskId = "task${System.currentTimeMillis()}"
+                                    db.collection("courses")
+                                        .document(courseId)
+                                        .collection("modules")
+                                        .document(moduleId)
+                                        .collection("chapters")
+                                        .document(chapterId)
+                                        .collection("tasks")
+                                        .document(newTaskId)
+                                        .set(
+                                            mapOf(
+                                                "question" to newTaskQuestion,
+                                                "type" to newTaskType
+                                            )
+                                        )
+                                        .addOnSuccessListener {
+                                            newTaskQuestion = ""
+                                        }
+                                }
                             }
+                        ) {
+                            Text("Add Task")
                         }
-                    ) {
-                        Text("Add Task")
+
+                        Button(
+                            onClick = { showTaskTypeDialog = true }
+                        ) {
+                            Text("Set task type")
+                        }
                     }
                 }
             }
@@ -805,6 +824,29 @@ fun ChapterViewScreen(
             }
         )
     }
+
+    if (showTaskTypeDialog) {
+        Dialog(
+            onDismissRequest = { showTaskTypeDialog = false }
+        ) {
+            Column(
+                modifier = Modifier
+                    .background(MaterialTheme.colorScheme.surface)
+                    .padding(16.dp)
+            ) {
+                Text("Select task type")
+                TaskTypeItem(
+                    text = "Multiple Choice",
+                    onClick = { newTaskType = "Multiple Choice"; showTaskTypeDialog = false })
+                TaskTypeItem(
+                    text = "Drop Down",
+                    onClick = { newTaskType = "Drop Down"; showTaskTypeDialog = false })
+                TaskTypeItem(
+                    text = "Yes / No",
+                    onClick = { newTaskType = "Yes/No"; showTaskTypeDialog = false })
+            }
+        }
+    }
 }
 
 @Composable
@@ -823,13 +865,20 @@ fun TaskItem(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = task.question,
-                style = MaterialTheme.typography.bodyLarge,
+            Column (
                 modifier = Modifier
                     .weight(1f)
                     .clickable(onClick = onNavigateToOptions)
-            )
+            ) {
+                Text(
+                    text = task.question,
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                Text(
+                    text = task.type.typeName,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
             IconButton(onClick = { onEdit(task) }) {
                 Icon(Icons.Default.Edit, "Edit task")
             }
@@ -841,6 +890,22 @@ fun TaskItem(
                 )
             }
         }
+    }
+}
+
+@Composable
+fun TaskTypeItem(
+    text: String,
+    onClick: () -> Unit,
+) {
+    Row (
+        modifier = Modifier
+            .padding(8.dp)
+            .background(MaterialTheme.colorScheme.secondaryContainer)
+            .padding(8.dp)
+            .clickable(onClick = onClick)
+    ) {
+        Text(text)
     }
 }
 
