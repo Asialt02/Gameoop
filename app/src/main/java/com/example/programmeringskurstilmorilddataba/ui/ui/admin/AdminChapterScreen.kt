@@ -298,7 +298,44 @@ fun ChapterViewScreen(
         )
     }
 
-    if (showTaskTypeDialog) {
+    if (showEditIntroDialog) {
+        AlertDialog(
+            onDismissRequest = { showEditIntroDialog = false },
+            title = { Text("Edit Introduction") },
+            text = {
+                OutlinedTextField(
+                    value = editedIntro,
+                    onValueChange = { editedIntro = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Introduction") }
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        db.collection("courses")
+                            .document(courseId)
+                            .collection("modules")
+                            .document(moduleId)
+                            .collection("chapters")
+                            .document(chapterId)
+                            .update("introduction", editedIntro)
+                        showEditIntroDialog = false
+                    }
+                ) {
+                    Text("Save")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEditIntroDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+
+            if (showTaskTypeDialog) {
         Dialog(
             onDismissRequest = { showTaskTypeDialog = false }
         ) {
