@@ -23,6 +23,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.programmeringskurstilmorilddataba.data.Option
+import com.example.programmeringskurstilmorilddataba.data.Task
+import com.example.programmeringskurstilmorilddataba.data.TaskType
 
 
 // NOT FINISHED

@@ -4,14 +4,14 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.programmeringskurstilmorilddataba.ui.ui.AdminDashboard
-import com.example.programmeringskurstilmorilddataba.ui.ui.ChapterViewScreen
 import com.example.programmeringskurstilmorilddataba.ui.ui.CourseModules
-import com.example.programmeringskurstilmorilddataba.ui.ui.ModuleEditorScreen
-import com.example.programmeringskurstilmorilddataba.ui.ui.TaskOptionsScreen
 import com.example.programmeringskurstilmorilddataba.ui.ui.UserCourses
 import com.example.programmeringskurstilmorilddataba.ui.ui.UserProfile
 import com.example.programmeringskurstilmorilddataba.ui.ui.UserUIScreen
+import com.example.programmeringskurstilmorilddataba.ui.ui.admin.AdminDashboard
+import com.example.programmeringskurstilmorilddataba.ui.ui.admin.ChapterViewScreen
+import com.example.programmeringskurstilmorilddataba.ui.ui.admin.ModuleEditorScreen
+import com.example.programmeringskurstilmorilddataba.ui.ui.admin.TaskOptionsScreen
 import com.example.programmeringskurstilmorilddataba.ui.ui.auth.LoginScreen
 import com.example.programmeringskurstilmorilddataba.ui.ui.auth.RegisterScreen
 
@@ -50,7 +50,7 @@ fun AppNavigation() {
         // Course Navigation
         composable(Screen.CourseScreen.route) { backStackEntry ->
             val courseName = backStackEntry.arguments?.getString("courseName") ?: ""
-            com.example.programmeringskurstilmorilddataba.ui.ui.CourseScreen(
+            com.example.programmeringskurstilmorilddataba.ui.ui.admin.CourseScreen(
                 navController,
                 courseName
             )
