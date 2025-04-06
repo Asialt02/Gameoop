@@ -4,6 +4,9 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.programmeringskurstilmorilddataba.ChangeDisplayNameScreen
+import com.example.programmeringskurstilmorilddataba.ChangePasswordScreen
+import com.example.programmeringskurstilmorilddataba.SettingsScreen
 import com.example.programmeringskurstilmorilddataba.ui.ui.CourseModules
 import com.example.programmeringskurstilmorilddataba.ui.ui.UserCourses
 import com.example.programmeringskurstilmorilddataba.ui.ui.UserProfile
@@ -45,6 +48,15 @@ fun AppNavigation() {
         }
         composable(Screen.UserCourses.route) {
             UserCourses(navController)
+        }
+        composable(Screen.UserSettings.route) {
+            SettingsScreen(navController)
+        }
+        composable(Screen.ChangeUsername.route) {
+            ChangeDisplayNameScreen(navController)
+        }
+        composable(Screen.ChangePassword.route) {
+            ChangePasswordScreen(navController)
         }
 
         // Course Navigation

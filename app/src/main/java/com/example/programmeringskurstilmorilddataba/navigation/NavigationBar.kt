@@ -23,7 +23,7 @@ fun BottomNavBar(navController: NavController, modifier: Modifier = Modifier) {
         BottomNavItem("Courses", "userCourses"),
         BottomNavItem("Profile", "userProfile"),
         BottomNavItem("Friends", "Friends"),
-        BottomNavItem("Settings", "Settings")
+        BottomNavItem("Settings", Screen.UserSettings.route)
     )
 
     Row(
