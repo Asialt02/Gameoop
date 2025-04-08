@@ -6,7 +6,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.programmeringskurstilmorilddataba.ChangeDisplayNameScreen
 import com.example.programmeringskurstilmorilddataba.ChangePasswordScreen
-import com.example.programmeringskurstilmorilddataba.SettingsScreen
+import com.example.programmeringskurstilmorilddataba.ui.ui.SettingsScreen
 import com.example.programmeringskurstilmorilddataba.ui.ui.CourseModules
 import com.example.programmeringskurstilmorilddataba.ui.ui.UserCourses
 import com.example.programmeringskurstilmorilddataba.ui.ui.UserProfile

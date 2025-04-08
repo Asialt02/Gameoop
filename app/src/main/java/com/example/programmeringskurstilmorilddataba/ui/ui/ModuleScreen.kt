@@ -1,5 +1,6 @@
 package com.example.programmeringskurstilmorilddataba.ui.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -102,9 +103,9 @@ fun CourseModules(navController: NavController, courseName: String) {
                     itemsIndexed(moduleNames.value) { index, name ->
                         ModuleCardUnlock(
                             moduleName = name,
-                            chaptersComplete = 2,
+                            chaptersComplete = 0,
                             numberOfChapters = 5,
-                            taskComplete = 10,
+                            taskComplete = 0,
                             numberOfTasks = 20)
                     }
                 }
