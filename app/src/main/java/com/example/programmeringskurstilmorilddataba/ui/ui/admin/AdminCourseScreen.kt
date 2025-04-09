@@ -24,6 +24,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -35,9 +36,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.isEmpty
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.programmeringskurstilmorilddataba.data.deleteCourse
+import com.example.programmeringskurstilmorilddataba.data.difficultyColors
+import com.example.programmeringskurstilmorilddataba.data.navigateToModuleEditorByName
 import com.example.programmeringskurstilmorilddataba.navigation.Screen
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
@@ -157,19 +161,53 @@ fun CourseScreen(navController: NavController, courseName: String) {
                                 ModuleCard(
                                     moduleName = moduleName,
                                     onClick = {
+                                        navigateToModuleEditorByName(
+                                            navController = navController,
+                                            courseName = courseName,
+                                            moduleName = moduleName // The current name of the module
+                                        )
+
+                                        /*
                                         navController.navigate(
                                             Screen.ModuleEditorScreen.createRoute(
                                                 courseName = courseName,
                                                 moduleId = moduleName
                                             )
-                                        )
+                                        )*/
                                     },
                                     onDelete = {
                                         db.collection("courses")
                                             .document(courseName)
                                             .collection("modules")
+                                            .whereEqualTo("name", moduleName) // Query by name
+                                            .get()
+                                            .addOnSuccessListener { querySnapshot ->
+                                                if (!querySnapshot.isEmpty) {
+                                                    val document = querySnapshot.documents[0]
+                                                    val moduleId = document.id
+                                                    db.collection("courses")
+                                                        .document(courseName)
+                                                        .collection("modules")
+                                                        .document(moduleId)
+                                                        .delete()
+                                                } else {
+                                                    // Handle case where module with that name is not found
+                                                    println("Module with name '$moduleName' not found for deletion.")
+                                                }
+                                            }
+                                            .addOnFailureListener { exception ->
+                                                // Handle query failure
+                                                println("Error fetching module ID for deletion: $exception")
+                                            }
+
+                                        /*
+                                        db.collection("courses")
+                                            .document(courseName)
+                                            .collection("modules")
                                             .document(moduleName)
                                             .delete()
+
+                                         */
                                     }
                                 )
                             }
@@ -220,6 +258,7 @@ fun ModuleCard(
 fun AddModuleSection(courseName: String) {
     var newModuleName by remember { mutableStateOf("") }
     val db = FirebaseFirestore.getInstance()
+    var selectedDifficulty by remember { mutableStateOf("beginner") }
 
     Column(modifier = Modifier.padding(top = 16.dp)) {
         OutlinedTextField(
@@ -228,15 +267,28 @@ fun AddModuleSection(courseName: String) {
             label = { Text("New Module Name") },
             modifier = Modifier.fillMaxWidth()
         )
+
+        Text("Select Difficulty:")
+        DifficultySelector { difficulty ->
+            selectedDifficulty = difficulty
+        }
+
         Button(
             onClick = {
                 if (newModuleName.isNotBlank()) {
+                    val selectedColor = difficultyColors[selectedDifficulty]
+                    val moduleData = mapOf(
+                        "name" to newModuleName,
+                        "difficulty" to selectedDifficulty,
+                        "difficultyColor" to selectedColor
+                    )
                     db.collection("courses")
                         .document(courseName)
                         .collection("modules")
                         .document(newModuleName)
-                        .set(mapOf("name" to newModuleName))
+                        .set(moduleData)
                     newModuleName = ""
+                    selectedDifficulty = "beginner"
                 }
             },
             modifier = Modifier
@@ -245,6 +297,26 @@ fun AddModuleSection(courseName: String) {
             enabled = newModuleName.isNotBlank()
         ) {
             Text("Add Module")
+        }
+    }
+}
+
+@Composable
+fun DifficultySelector(onDifficultySelected: (String) -> Unit) {
+    var selectedDifficulty by remember { mutableStateOf("") }
+
+    Column {
+        difficultyColors.forEach { (difficulty, color) ->
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                RadioButton(
+                    selected = selectedDifficulty == difficulty,
+                    onClick = {
+                        selectedDifficulty = difficulty
+                        onDifficultySelected(difficulty)
+                    }
+                )
+                Text(text = difficulty.replaceFirstChar { it.uppercase() })
+            }
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.example.programmeringskurstilmorilddataba.ui.ui.admin
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,7 +15,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.AlertDialog
@@ -22,14 +25,20 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -42,6 +51,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.programmeringskurstilmorilddataba.data.Chapter
+import com.example.programmeringskurstilmorilddataba.data.Module
+import com.example.programmeringskurstilmorilddataba.data.difficultyColors
 import com.example.programmeringskurstilmorilddataba.navigation.Screen
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -55,20 +66,36 @@ fun ModuleEditorScreen(
 ) {
     val db = FirebaseFirestore.getInstance()
     var moduleTitle by remember { mutableStateOf("") }
+    var module by remember { mutableStateOf<Module?>(null) }
     var chapters by remember { mutableStateOf<List<Chapter>>(emptyList()) }
     var expandedChapterId by remember { mutableStateOf<String?>(null) }
     var showDeleteDialog by remember { mutableStateOf<String?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
+
+    var showTitleDialog by remember { mutableStateOf(false) }
+    var editedTitle by remember { mutableStateOf("") }
 
     LaunchedEffect(moduleId) {
         db.collection("courses")
             .document(courseName)
             .collection("modules")
             .document(moduleId)
-            .get()
+            .addSnapshotListener { doc, _ ->
+                doc?.let {
+                    module = Module(
+                        id = doc.id,
+                        name = doc.getString("name") ?: "",
+                        difficulty = doc.getString("difficulty") ?: "",
+                        difficultyColor = doc.getString("difficultyColor") ?: ""
+                    )
+                }
+            }
+
+            /*
             .addOnSuccessListener { doc ->
                 moduleTitle = doc.getString("name") ?: ""
-            }
+
+             */
 
         db.collection("courses")
             .document(courseName)
@@ -84,7 +111,8 @@ fun ModuleEditorScreen(
                     Chapter(
                         id = doc.id,
                         title = doc.getString("title") ?: "",
-                        introduction = doc.getString("introduction") ?: ""
+                        introduction = doc.getString("introduction") ?: "",
+                        level = doc.getLong("level")?.toInt() ?: 0
                     )
                 } ?: emptyList()
             }
@@ -93,10 +121,17 @@ fun ModuleEditorScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(moduleTitle) },
+                title = { Text(module?.name ?: "Loading...") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = {
+                        showTitleDialog = true
+                        editedTitle = module?.name ?: ""}) {
+                        Icon(Icons.Default.Edit, "Edit title")
                     }
                 }
             )
@@ -115,6 +150,22 @@ fun ModuleEditorScreen(
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
             }
+
+
+            DifficultyDropdown(
+                currentDifficulty = module?.difficulty ?: "",
+                onDifficultySelected = { newDifficulty ->
+                    val difficultyData = hashMapOf(
+                        "difficulty" to newDifficulty,
+                        "difficultyColor" to difficultyColors[newDifficulty]
+                    )
+                    db.collection("courses")
+                        .document(courseName)
+                        .collection("modules")
+                        .document(moduleId)
+                        .update("difficulty", difficultyData["difficulty"], "difficultyColor", difficultyData["difficultyColor"])
+                })
+
 
             AddChapterSection(courseName, moduleId)
 
@@ -143,6 +194,46 @@ fun ModuleEditorScreen(
                 }
             }
         }
+    }
+
+    if (showTitleDialog) {
+        AlertDialog(
+            onDismissRequest = { showTitleDialog = false },
+            title = { Text("Edit module title") },
+            text = {
+                Column {
+                    OutlinedTextField(
+                        value = editedTitle,
+                        onValueChange = { editedTitle = it },
+                        label = { Text("Module title") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showTitleDialog.let { title ->
+                            db.collection("courses")
+                                .document(courseName)
+                                .collection("modules")
+                                .document(moduleId)
+                                .update("name", editedTitle)
+                                .addOnSuccessListener {
+                                    showTitleDialog = false
+                                }
+                        }
+                    }
+                ) {
+                    Text("Save")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showTitleDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 
     showDeleteDialog?.let { chapterId ->
@@ -196,7 +287,8 @@ fun AddChapterSection(courseName: String, moduleId: String) {
                     val chapterData = hashMapOf(
                         "title" to newChapterTitle,
                         "introduction" to "",
-                        "createdAt" to FieldValue.serverTimestamp()
+                        "createdAt" to FieldValue.serverTimestamp(),
+                        "level" to 0
                     )
                     db.collection("courses")
                         .document(courseName)
@@ -232,10 +324,6 @@ fun ChapterItem(
             .fillMaxWidth()
             .padding(8.dp),
         shape = MaterialTheme.shapes.medium,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-        ),
         onClick = onNavigateToView
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -296,6 +384,52 @@ fun ChapterItem(
                     ) {
                         Text("View Chapter")
                     }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DifficultyDropdown(
+    currentDifficulty: String,
+    onDifficultySelected: (String) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val difficultyOptions =
+        listOf("beginner", "intermediate", "advanced", "expert") // Your difficulty levels
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(text = "Difficulty:")
+
+        ExposedDropdownMenuBox(
+            expanded = expanded,
+            onExpandedChange = { expanded = it }
+        ) {
+            TextField(
+                modifier = Modifier.menuAnchor(),
+                value = currentDifficulty.replaceFirstChar { it.uppercase() },
+                onValueChange = {},
+                readOnly = true,
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) })
+            ExposedDropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }) {
+                difficultyOptions.forEach { difficulty ->
+                    DropdownMenuItem(
+                        text = { Text(text = difficulty.replaceFirstChar { it.uppercase() }) },
+                        onClick = {
+                            onDifficultySelected(difficulty)
+                            expanded = false
+                        }
+                    )
                 }
             }
         }

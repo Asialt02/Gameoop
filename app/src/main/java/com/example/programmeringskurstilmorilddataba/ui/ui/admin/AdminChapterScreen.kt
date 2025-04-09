@@ -32,6 +32,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -67,6 +68,10 @@ fun ChapterViewScreen(
 
     var showTaskTypeDialog by remember { mutableStateOf(false) }
     var newTaskType by remember { mutableStateOf("Multiple Choice") }
+    var showLevelDialog by remember { mutableStateOf(false) }
+    var editedLevel by remember { mutableStateOf("") }
+    var showTitleDialog by remember { mutableStateOf(false) }
+    var editedTitle by remember { mutableStateOf("") }
 
     LaunchedEffect(chapterId) {
         db.collection("courses")
@@ -80,7 +85,8 @@ fun ChapterViewScreen(
                     chapter = Chapter(
                         id = doc.id,
                         title = doc.getString("title") ?: "",
-                        introduction = doc.getString("introduction") ?: ""
+                        introduction = doc.getString("introduction") ?: "",
+                        level = doc.getLong("level")?.toInt() ?: 0
                     )
                 }
             }
@@ -108,11 +114,22 @@ fun ChapterViewScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            TopAppBar(modifier = Modifier.padding(end = 8.dp),
                 title = { Text(chapter?.title ?: "Loading...") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = {
+                        showTitleDialog = true
+                        editedTitle = chapter?.title ?: "" }) {
+                        Icon(Icons.Default.Edit, "Edit title")
+                    }
+
+                    Button(onClick = {showLevelDialog = true}) {
+                        Text("LVL ${chapter?.level ?: 0}")
                     }
                 }
             )
@@ -252,6 +269,91 @@ fun ChapterViewScreen(
                 }
             }
         }
+    }
+    if (showTitleDialog) {
+        AlertDialog(
+            onDismissRequest = { showTitleDialog = false },
+            title = { Text("Edit chapter title") },
+            text = {
+                Column {
+                    OutlinedTextField(
+                        value = editedTitle,
+                        onValueChange = { editedTitle = it },
+                        label = { Text("Chapter title") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showTitleDialog.let { title ->
+                            db.collection("courses")
+                                .document(courseId)
+                                .collection("modules")
+                                .document(moduleId)
+                                .collection("chapters")
+                                .document(chapterId)
+                                .update("title", editedTitle)
+                                .addOnSuccessListener {
+                                    showTitleDialog = false
+                                }
+                        }
+                    }
+                ) {
+                    Text("Save")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showTitleDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+
+
+    if (showLevelDialog) {
+        AlertDialog(
+            onDismissRequest = { showLevelDialog = false },
+            title = { Text("Edit chapter level") },
+            text = {
+                Column {
+                    OutlinedTextField(
+                        value = editedLevel,
+                        onValueChange = { editedLevel = it },
+                        label = { Text("Chapter level") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showLevelDialog.let { lvl ->
+                            db.collection("courses")
+                                .document(courseId)
+                                .collection("modules")
+                                .document(moduleId)
+                                .collection("chapters")
+                                .document(chapterId)
+                                .update("level", editedLevel.toInt())
+                                .addOnSuccessListener {
+                                    showLevelDialog = false
+                                }
+                        }
+                    }
+                ) {
+                    Text("Save")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLevelDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 
     if (showEditTaskDialog != null) {

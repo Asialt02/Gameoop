@@ -1,8 +1,14 @@
 package com.example.programmeringskurstilmorilddataba.data
 
 import android.util.Log
+import androidx.compose.ui.geometry.isEmpty
+import androidx.lifecycle.get
+import androidx.navigation.NavController
+import com.example.programmeringskurstilmorilddataba.navigation.Screen
+import com.google.firebase.Firebase
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.firestore
 
 fun saveOptions(
     db: FirebaseFirestore,
@@ -40,7 +46,8 @@ fun saveOptions(
 data class Chapter(
     val id: String,
     val title: String,
-    val introduction: String
+    val introduction: String,
+    val level: Int
 )
 
 data class Task(
@@ -54,6 +61,14 @@ data class Option(
     val id: String,
     val text: String,
     val isCorrect: Boolean
+)
+
+data class Module (
+    val id: String,
+    val name: String,
+    val difficulty: String,
+    val difficultyColor: String,
+
 )
 
 fun addCourse(
@@ -117,3 +132,43 @@ sealed class TaskType(val typeName: String) {
         }
     }
 }
+
+fun navigateToModuleEditorByName(
+    navController: NavController,
+    courseName: String,
+    moduleName: String // The *current* name of the module
+) {
+    val db = Firebase.firestore
+    db.collection("courses")
+        .document(courseName)
+        .collection("modules")
+        .whereEqualTo("name", moduleName) // Query for the module with the given name
+        .get()
+        .addOnSuccessListener { querySnapshot ->
+            if (!querySnapshot.isEmpty) {
+                // Assuming there's only one module with that name (or take the first one)
+                val document = querySnapshot.documents[0]
+                val moduleId = document.id // Get the document ID (which is your module ID)
+
+
+                navController.navigate(
+                    Screen.ModuleEditorScreen.createRoute(courseName, moduleId)
+                )
+            } else {
+                // Handle the case where no module with that name is found
+                // (e.g., show an error message, navigate to a different screen)
+                println("No module found with name: $moduleName")
+            }
+        }
+        .addOnFailureListener { exception ->
+            // Handle query failure (e.g., network error)
+            println("Error querying for module: $exception")
+        }
+}
+
+val difficultyColors = mapOf(
+    "beginner" to "#73BD6C",
+    "intermediate" to "#BDBA6C",
+    "advanced" to "#BD886C",
+    "expert" to "#BD6C6C"
+)
