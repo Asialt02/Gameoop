@@ -30,7 +30,7 @@ fun UserUIScreen(navController: NavController) {
     val auth = FirebaseAuth.getInstance()
     val db = FirebaseFirestore.getInstance()
     val currentUser = auth.currentUser
-    var courses by remember { mutableStateOf(listOf<DocumentSnapshot>()) }
+    var courses by remember { mutableStateOf<List<Map<String, Any>>>(emptyList()) }
     var userName by remember { mutableStateOf("") }
     val userId = currentUser?.uid
     if (userId != null) {
@@ -46,12 +46,21 @@ fun UserUIScreen(navController: NavController) {
 
     LaunchedEffect(currentUser) {
         currentUser?.uid?.let { userId ->
-            getCoursesUser(db, userId) { fetchedCourses ->
-                courses = fetchedCourses
-                fetchedCourses.forEach { doc ->
-                    Log.d("Firestore", "Fetched Course: ${doc.data}")
+            db.collection("users")
+                .document(userId)
+                .collection("activeCourses")
+                .get()
+                .addOnSuccessListener { querySnapshot ->
+                    // Convert DocumentSnapshots to List<Map<String, Any>>
+                    courses = querySnapshot.documents.map { document ->
+                        document.data?.toMutableMap() ?: mutableMapOf<String, Any>().apply {
+                            // Ensure required fields exist with default values
+                            put("courseName", document.getString("courseName") ?: "Untitled")
+                            put("modulesComplete", document.getLong("modulesComplete")?.toInt() ?: 0)
+                            put("numberOfModules", document.getLong("numberOfModules")?.toInt() ?: 1)
+                        }
+                    }
                 }
-            }
         }
     }
     Scaffold { innerPadding ->
@@ -76,27 +85,10 @@ fun UserUIScreen(navController: NavController) {
                     textAlign = TextAlign.Center,
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                ActiveCourseList(db)
+                ActiveCourseList(navController = navController, courses = courses)
                 Spacer(modifier = Modifier.height(8.dp))
             }
             BottomNavBar(navController)
         }
     }
 }
-
-/*
-@Composable
-fun Data() {
-    val myCardData = listOf(
-        CardData("Card 1", "Description 1", R.drawable.ic_launcher_foreground),
-        CardData("Card 2", "Description 2", R.drawable.ic_launcher_foreground),
-        CardData("Card 3", "Description 3", R.drawable.ic_launcher_foreground),
-        CardData("Card 4", "Description 4", R.drawable.ic_launcher_foreground),
-        CardData("Card 5", "Description 5", R.drawable.ic_launcher_foreground),
-        CardData("Card 6", "Description 6", R.drawable.ic_launcher_foreground),
-        CardData("Card 7", "Description 7", R.drawable.ic_launcher_foreground),
-        CardData("Card 8", "Description 8", R.drawable.ic_launcher_foreground),
-    )
-    HorizontalCardList(cardDataList = myCardData)
-}
-*/

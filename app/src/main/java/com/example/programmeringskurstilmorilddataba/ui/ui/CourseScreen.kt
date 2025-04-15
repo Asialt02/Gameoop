@@ -1,5 +1,6 @@
 package com.example.programmeringskurstilmorilddataba.ui.ui
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -38,6 +39,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import com.example.programmeringskurstilmorilddataba.navigation.BottomNavBar
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 
 @Composable
@@ -198,6 +201,36 @@ fun ReadMoreButton(navController: NavController, courseName: String, courseDescr
                     Row(horizontalArrangement = Arrangement.SpaceBetween) {
                         Button(
                             onClick = {
+                                val currentUser = FirebaseAuth.getInstance().currentUser
+                                if (currentUser == null) {
+                                    Log.w("Auth", "User not logged in")
+
+                                    return@Button
+                                }
+
+                                val db = FirebaseFirestore.getInstance()
+                                val userCoursesRef = db.collection("users")
+                                    .document(currentUser.uid)
+                                    .collection("activeCourses")
+
+                                userCoursesRef
+                                    .whereEqualTo("courseName", courseName)
+                                    .get()
+                                    .addOnSuccessListener { querySnapshot ->
+                                        if (querySnapshot.isEmpty) {
+
+                                            userCoursesRef.add(
+                                                mapOf(
+                                                "courseName" to courseName,
+                                                "modulesComplete" to 0,
+                                                "numberOfModules" to 10
+                                            )
+                                            )
+                                        }
+                                    }
+                                    .addOnFailureListener { e ->
+                                        Log.w("Firestore", "Error checking course existence", e)
+                                    }
                                 navController.navigate("courseModules/$courseName")
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6A1B9A))
