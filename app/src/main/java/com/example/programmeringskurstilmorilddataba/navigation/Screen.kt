@@ -35,4 +35,12 @@ sealed class Screen(val route: String) {
             taskId: String
         ) = "taskOptions/$courseId/$moduleId/$chapterId/$taskId"
     }
+    object DropDownTaskOptionsScreen : Screen("dropDownTaskOptions/{courseId}/{moduleId}/{chapterId}/{taskId}") {
+        fun createRoute(
+            courseId: String,
+            moduleId: String,
+            chapterId: String,
+            taskId: String
+        ) = "dropDownTaskOptions/$courseId/$moduleId/$chapterId/$taskId"
+    }
 }

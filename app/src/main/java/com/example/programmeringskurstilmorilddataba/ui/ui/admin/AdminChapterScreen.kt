@@ -209,14 +209,26 @@ fun ChapterViewScreen(
                                         .delete()
                                 },
                                 onNavigateToOptions = {
-                                    navController.navigate(
-                                        Screen.TaskOptionsScreen.createRoute(
-                                            courseId = courseId,
-                                            moduleId = moduleId,
-                                            chapterId = chapterId,
-                                            taskId = task.id
+                                    if (task.type.typeName == TaskType.DropDown.typeName) {
+                                        navController.navigate(
+                                            Screen.DropDownTaskOptionsScreen.createRoute(
+                                                courseId = courseId,
+                                                moduleId = moduleId,
+                                                chapterId = chapterId,
+                                                taskId = task.id
+                                            )
                                         )
-                                    )
+                                    }
+                                    else {
+                                        navController.navigate(
+                                            Screen.TaskOptionsScreen.createRoute(
+                                                courseId = courseId,
+                                                moduleId = moduleId,
+                                                chapterId = chapterId,
+                                                taskId = task.id
+                                            )
+                                        )
+                                    }
                                 }
                             )
                         }
@@ -357,47 +369,97 @@ fun ChapterViewScreen(
     }
 
     if (showEditTaskDialog != null) {
-        AlertDialog(
-            onDismissRequest = { showEditTaskDialog = null },
-            title = { Text("Edit Task") },
-            text = {
-                Column {
-                    OutlinedTextField(
-                        value = editedTaskQuestion,
-                        onValueChange = { editedTaskQuestion = it },
-                        label = { Text("Task Question") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
+        if (showEditTaskDialog!!.type != TaskType.DropDown) {
+            AlertDialog(
+                onDismissRequest = { showEditTaskDialog = null },
+                title = { Text("Edit Task") },
+                text = {
+                    Column {
+                        OutlinedTextField(
+                            value = editedTaskQuestion,
+                            onValueChange = { editedTaskQuestion = it },
+                            label = { Text("Task Question") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            showEditTaskDialog?.let { task ->
+                                db.collection("courses")
+                                    .document(courseId)
+                                    .collection("modules")
+                                    .document(moduleId)
+                                    .collection("chapters")
+                                    .document(chapterId)
+                                    .collection("tasks")
+                                    .document(task.id)
+                                    .update("question", editedTaskQuestion)
+                                    .addOnSuccessListener {
+                                        showEditTaskDialog = null
+                                    }
+                            }
+                        }
+                    ) {
+                        Text("Save")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showEditTaskDialog = null }) {
+                        Text("Cancel")
+                    }
                 }
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        showEditTaskDialog?.let { task ->
-                            db.collection("courses")
-                                .document(courseId)
-                                .collection("modules")
-                                .document(moduleId)
-                                .collection("chapters")
-                                .document(chapterId)
-                                .collection("tasks")
-                                .document(task.id)
-                                .update("question", editedTaskQuestion)
-                                .addOnSuccessListener {
-                                    showEditTaskDialog = null
-                                }
+            )
+        }
+        else {
+            AlertDialog(
+                onDismissRequest = { showEditTaskDialog = null },
+                title = { Text("Edit Task") },
+                text = {
+                    Column {
+                        OutlinedTextField(
+                            value = editedTaskQuestion,
+                            onValueChange = { editedTaskQuestion = it },
+                            label = { Text("Task Question") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Button(
+                            onClick = {editedTaskQuestion = editedTaskQuestion.plus("[OPTION]")}
+                        ) {
+                            Text("Insert option")
                         }
                     }
-                ) {
-                    Text("Save")
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            showEditTaskDialog?.let { task ->
+                                db.collection("courses")
+                                    .document(courseId)
+                                    .collection("modules")
+                                    .document(moduleId)
+                                    .collection("chapters")
+                                    .document(chapterId)
+                                    .collection("tasks")
+                                    .document(task.id)
+                                    .update("question", editedTaskQuestion)
+                                    .addOnSuccessListener {
+                                        showEditTaskDialog = null
+                                    }
+                            }
+                        }
+                    ) {
+                        Text("Save")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showEditTaskDialog = null }) {
+                        Text("Cancel")
+                    }
                 }
-            },
-            dismissButton = {
-                TextButton(onClick = { showEditTaskDialog = null }) {
-                    Text("Cancel")
-                }
-            }
-        )
+            )
+        }
     }
 
     if (showEditIntroDialog) {

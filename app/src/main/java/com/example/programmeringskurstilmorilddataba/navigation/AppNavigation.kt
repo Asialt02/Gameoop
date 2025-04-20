@@ -15,6 +15,7 @@ import com.example.programmeringskurstilmorilddataba.ui.ui.admin.AdminDashboard
 import com.example.programmeringskurstilmorilddataba.ui.ui.admin.ChapterViewScreen
 import com.example.programmeringskurstilmorilddataba.ui.ui.admin.ModuleEditorScreen
 import com.example.programmeringskurstilmorilddataba.ui.ui.admin.TaskOptionsScreen
+import com.example.programmeringskurstilmorilddataba.ui.ui.admin.DropDownTaskOptionsScreen
 import com.example.programmeringskurstilmorilddataba.ui.ui.auth.LoginScreen
 import com.example.programmeringskurstilmorilddataba.ui.ui.auth.RegisterScreen
 
@@ -91,6 +92,19 @@ fun AppNavigation() {
             val chapterId = backStackEntry.arguments?.getString("chapterId") ?: ""
             val taskId = backStackEntry.arguments?.getString("taskId") ?: ""
             TaskOptionsScreen(
+                navController = navController,
+                courseId = courseId,
+                moduleId = moduleId,
+                chapterId = chapterId,
+                taskId = taskId
+            )
+        }
+        composable(Screen.DropDownTaskOptionsScreen.route) { backStackEntry ->
+            val courseId = backStackEntry.arguments?.getString("courseId") ?: ""
+            val moduleId = backStackEntry.arguments?.getString("moduleId") ?: ""
+            val chapterId = backStackEntry.arguments?.getString("chapterId") ?: ""
+            val taskId = backStackEntry.arguments?.getString("taskId") ?: ""
+            DropDownTaskOptionsScreen(
                 navController = navController,
                 courseId = courseId,
                 moduleId = moduleId,

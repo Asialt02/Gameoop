@@ -43,6 +43,51 @@ fun saveOptions(
         }
 }
 
+fun saveDropDownOptions(
+    db: FirebaseFirestore,
+    courseId: String,
+    moduleId: String,
+    chapterId: String,
+    taskId: String,
+    taskQuestion: String,
+    optionSets: List<List<Pair<String,Boolean>>>
+) {
+
+    var optionSetsMap = hashMapOf<String, Any>()
+
+    optionSets.forEachIndexed { index, entry ->
+        val optionsMap1 = entry.mapIndexed { index, (text, isCorrect) ->
+            "option$index" to mapOf(
+                "text" to text,
+                "isCorrect" to isCorrect
+            )
+        }.toMap()
+
+        optionSetsMap.put(
+            "optionSet$index",
+            optionsMap1
+        )
+    }
+
+
+    val updateData = hashMapOf<String, Any>(
+        "$taskId.question" to taskQuestion,
+        "$taskId.optionSets" to optionSetsMap
+    )
+
+
+    db.collection("courses")
+        .document(courseId)
+        .collection("modules")
+        .document(moduleId)
+        .collection("chapters")
+        .document(chapterId)
+        .update(updateData)
+        .addOnFailureListener { e ->
+            Log.e("SaveOptions", "Error saving options", e)
+        }
+}
+
 data class Chapter(
     val id: String,
     val title: String,
@@ -55,6 +100,13 @@ data class Task(
     val question: String,
     val type: TaskType = TaskType.MultipleChoice,
     val options: List<Option> = emptyList()
+)
+
+data class DropDownTask(
+    val id: String,
+    val question: String,
+    val type: TaskType = TaskType.DropDown,
+    val options: List<List<Option>> = emptyList()
 )
 
 data class Option(
