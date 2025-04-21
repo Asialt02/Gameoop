@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -15,15 +16,21 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.programmeringskurstilmorilddataba.data.BottomNavItem
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.ui.graphics.vector.ImageVector
 
 @Composable
 fun BottomNavBar(navController: NavController, modifier: Modifier = Modifier) {
     val items = listOf(
-        BottomNavItem("Dashboard", "userUI"),
-        BottomNavItem("Courses", "userCourses"),
-        BottomNavItem("Profile", "userProfile"),
-        BottomNavItem("Friends", "Friends"),
-        BottomNavItem("Settings", Screen.UserSettings.route)
+        BottomNavItem("Dashboard", "userUI", Icons.Default.Home),
+        BottomNavItem("Courses", "userCourses", Icons.AutoMirrored.Filled.List),
+        BottomNavItem("Profile", "userProfile", Icons.Default.Person),
+        BottomNavItem("Friends", "friends", Icons.Default.Face),
+        BottomNavItem("Settings", Screen.UserSettings.route, Icons.Default.Settings)
     )
 
     Row(
@@ -33,23 +40,32 @@ fun BottomNavBar(navController: NavController, modifier: Modifier = Modifier) {
                 MaterialTheme.colorScheme.primary,
                 shape = RoundedCornerShape(32.dp, 32.dp, 0.dp, 0.dp)
             )
-            .padding(16.dp),
+            .padding(vertical = 8.dp),
         horizontalArrangement = Arrangement.SpaceAround
     ) {
         items.forEach { item ->
-            Text(
-                text = item.title,
-                color = Color.White,
-                modifier = Modifier
-                    .clickable {
-                        navController.navigate(item.route) {
-                            popUpTo(navController.graph.startDestinationId)
-                            launchSingleTop = true
-                        }
+            IconButton(
+                onClick = {
+                    navController.navigate(item.route) {
+                        popUpTo(navController.graph.startDestinationId)
+                        launchSingleTop = true
                     }
-                    .padding(8.dp),
-                style = MaterialTheme.typography.bodyMedium
-            )
+                },
+                modifier = Modifier.padding(horizontal = 12.dp)
+            ) {
+                Icon(
+                    imageVector = item.icon,
+                    contentDescription = item.title,
+                    tint = Color.White,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
         }
     }
 }
+
+data class BottomNavItem(
+    val title: String,
+    val route: String,
+    val icon: ImageVector
+)

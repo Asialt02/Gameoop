@@ -8,6 +8,8 @@ import com.example.programmeringskurstilmorilddataba.ChangeDisplayNameScreen
 import com.example.programmeringskurstilmorilddataba.ChangePasswordScreen
 import com.example.programmeringskurstilmorilddataba.ui.ui.SettingsScreen
 import com.example.programmeringskurstilmorilddataba.ui.ui.CourseModules
+import com.example.programmeringskurstilmorilddataba.ui.ui.FriendsScreen
+import com.example.programmeringskurstilmorilddataba.ui.ui.SearchResultsScreen
 import com.example.programmeringskurstilmorilddataba.ui.ui.UserCourses
 import com.example.programmeringskurstilmorilddataba.ui.ui.UserProfile
 import com.example.programmeringskurstilmorilddataba.ui.ui.UserUIScreen
@@ -110,6 +112,16 @@ fun AppNavigation() {
                 moduleId = moduleId,
                 chapterId = chapterId,
                 taskId = taskId
+            )
+        }
+
+        composable("friends") {
+            FriendsScreen(navController)
+        }
+        composable("searchResults/{query}") { backStackEntry ->
+            SearchResultsScreen(
+                navController = navController,
+                searchQuery = backStackEntry.arguments?.getString("query") ?: ""
             )
         }
     }
