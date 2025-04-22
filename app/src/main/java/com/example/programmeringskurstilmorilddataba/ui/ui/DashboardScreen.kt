@@ -1,11 +1,15 @@
 package com.example.programmeringskurstilmorilddataba.ui.ui
 
 import android.util.Log
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -32,16 +36,20 @@ fun UserUIScreen(navController: NavController) {
     val currentUser = auth.currentUser
     var courses by remember { mutableStateOf<List<Map<String, Any>>>(emptyList()) }
     var userName by remember { mutableStateOf("") }
+    var friends by remember { mutableStateOf<List<Pair<String, Int>>>(emptyList()) }
     val userId = currentUser?.uid
+
     if (userId != null) {
-        db.collection("users").document(userId).get()
-            .addOnSuccessListener { document ->
-                userName = document.getString("name") ?: ""
-                Log.d("Firestore", "User Name: $userName")
-            }
-            .addOnFailureListener { e ->
-                Log.e("Firestore", "Failed to fetch user name", e)
-            }
+        LaunchedEffect(userId) {
+            db.collection("users").document(userId).get()
+                .addOnSuccessListener { document ->
+                    userName = document.getString("name") ?: ""
+                    Log.d("Firestore", "User Name: $userName")
+                }
+                .addOnFailureListener { e ->
+                    Log.e("Firestore", "Failed to fetch user name", e)
+                }
+        }
     }
 
     LaunchedEffect(currentUser) {
@@ -51,10 +59,8 @@ fun UserUIScreen(navController: NavController) {
                 .collection("activeCourses")
                 .get()
                 .addOnSuccessListener { querySnapshot ->
-                    // Convert DocumentSnapshots to List<Map<String, Any>>
                     courses = querySnapshot.documents.map { document ->
                         document.data?.toMutableMap() ?: mutableMapOf<String, Any>().apply {
-                            // Ensure required fields exist with default values
                             put("courseName", document.getString("courseName") ?: "Untitled")
                             put("modulesComplete", document.getLong("modulesComplete")?.toInt() ?: 0)
                             put("numberOfModules", document.getLong("numberOfModules")?.toInt() ?: 1)
@@ -63,14 +69,34 @@ fun UserUIScreen(navController: NavController) {
                 }
         }
     }
-    Scaffold { innerPadding ->
 
+    LaunchedEffect(userId) {
+        userId?.let { uid ->
+            db.collection("users")
+                .document(uid)
+                .collection("friends")
+                .get()
+                .addOnSuccessListener { querySnapshot ->
+                    friends = querySnapshot.documents.mapNotNull { doc ->
+                        val name = doc.getString("name") ?: return@mapNotNull null
+                        val points = doc.getLong("points")?.toInt() ?: 0
+                        name to points
+                    }.sortedByDescending { it.second }
+                }
+                .addOnFailureListener { e ->
+                    Log.e("Firestore", "Failed to fetch friends", e)
+                }
+        }
+    }
+
+    Scaffold (
+        bottomBar = { BottomNavBar(navController) }
+    ){ innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
             horizontalAlignment = Alignment.CenterHorizontally
-
         ) {
             Column(
                 modifier = Modifier
@@ -86,9 +112,67 @@ fun UserUIScreen(navController: NavController) {
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 ActiveCourseList(navController = navController, courses = courses)
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(16.dp))
+
+                LeaderboardSection(friends = friends)
             }
-            BottomNavBar(navController)
         }
+    }
+}
+
+@Composable
+fun LeaderboardItem(position: Int, name: String, points: Int, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = "$position.",
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.width(24.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = name,
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+        Text(
+            text = "$points points",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.primary
+        )
+    }
+}
+
+@Composable
+fun LeaderboardSection(friends: List<Pair<String, Int>>) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.Start
+    ) {
+        Text(
+            text = "Leaderboard",
+            style = MaterialTheme.typography.headlineSmall,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+
+        friends.forEachIndexed { index, (name, points) ->
+            LeaderboardItem(
+                position = index + 1,
+                name = name,
+                points = points,
+                modifier = Modifier.padding(vertical = 4.dp)
+            )
+        }
+
+        Text(
+            text = "View all",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(top = 8.dp)
+        )
     }
 }
