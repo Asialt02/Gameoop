@@ -23,8 +23,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -35,13 +37,20 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.programmeringskurstilmorilddataba.navigation.BottomNavBar
 import com.example.programmeringskurstilmorilddataba.navigation.Screen
+import com.google.firebase.Firebase
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.firestore
+import kotlinx.coroutines.tasks.await
 
 @Composable
 fun CourseModules(navController: NavController, courseName: String) {
     val db = FirebaseFirestore.getInstance()
     val moduleNames = remember { mutableStateOf<List<String>>(emptyList()) }
+    val moduleIds = remember { mutableStateOf<List<String>>(emptyList()) }
+    var moduleData by remember { mutableStateOf<List<Pair<String, String>>>(emptyList()) }
     val isPassed = remember { mutableStateOf(true) }
+
+    var error by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(courseName) {
         db.collection("courses")
@@ -50,8 +59,15 @@ fun CourseModules(navController: NavController, courseName: String) {
             .get()
             .addOnSuccessListener { querySnapshot ->
                 val names = querySnapshot.documents.map { it.getString("name") ?: "" }
+                val ids = querySnapshot.documents.map { it.id ?: ""}
+                val data = querySnapshot.documents.map { (it.getString("name") ?: "") to (it.id ?: "") }
+                println(names)
                 moduleNames.value = names
+                moduleIds.value = ids
+                moduleData = data
             }
+
+
     }
     Scaffold(
         bottomBar = { BottomNavBar(navController) }
@@ -75,7 +91,9 @@ fun CourseModules(navController: NavController, courseName: String) {
                 item {
                     Text(
                         text = "No modules found for this course",
-                        modifier = Modifier.fillMaxWidth().padding(16.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
                         textAlign = TextAlign.Center
                     )
                 }
@@ -84,6 +102,7 @@ fun CourseModules(navController: NavController, courseName: String) {
                 item { ModuleCard(
                     navController = navController,
                     moduleName = "Object Oriented Programming",
+                    moduleId = "",
                     courseName = "",
                     chaptersComplete = 2,
                     numberOfChapters = 5,
@@ -92,10 +111,13 @@ fun CourseModules(navController: NavController, courseName: String) {
                 ) }
 //***************************************************************
                 if (isPassed.value) {
-                    itemsIndexed(moduleNames.value) { index, name ->
+                    itemsIndexed(moduleData) { index, data ->
+                        val moduleName = data.first
+                        val moduleId = data.second
                         ModuleCard(
                             navController = navController,
-                            moduleName = name,
+                            moduleName = moduleName,
+                            moduleId = moduleId,
                             courseName = courseName,
                             chaptersComplete = 2,
                             numberOfChapters = 5,
@@ -124,6 +146,7 @@ fun ModuleCard(
     navController: NavController,
     courseName: String,
     moduleName: String,
+    moduleId: String,
     chaptersComplete: Int,
     numberOfChapters: Int,
     taskComplete: Int,
@@ -137,7 +160,7 @@ fun ModuleCard(
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(8.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFFB084E8)),
-        onClick = {navController.navigate(Screen.UserChapters.createRoute(courseName, moduleName))}
+        onClick = {navController.navigate(Screen.UserChapters.createRoute(courseName, moduleId))}
 
     ) {
         Row(

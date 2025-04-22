@@ -381,7 +381,7 @@ fun DropDownTaskScreen (
                     tempList1 = tempList1.plus(listOf(Option(id = option.first, text = option.second.first, isCorrect = option.second.second)))
                 }
 
-                taskOptions = taskOptions.plus(listOf(tempList1))
+                taskOptions = taskOptions.plus(listOf(tempList1.sortedBy { it.id }))
 
             }
 
