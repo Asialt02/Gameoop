@@ -80,17 +80,6 @@ fun CourseModules(navController: NavController, courseName: String) {
                     )
                 }
             } else {
-// Do not remove, Amir will
-                item { ModuleCard(
-                    navController = navController,
-                    moduleName = "Object Oriented Programming",
-                    courseName = "",
-                    chaptersComplete = 2,
-                    numberOfChapters = 5,
-                    taskComplete = 10,
-                    numberOfTasks = 20
-                ) }
-//***************************************************************
                 if (isPassed.value) {
                     itemsIndexed(moduleNames.value) { index, name ->
                         ModuleCard(
