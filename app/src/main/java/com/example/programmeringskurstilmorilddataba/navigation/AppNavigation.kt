@@ -11,6 +11,8 @@ import com.example.programmeringskurstilmorilddataba.ui.ui.CourseModules
 import com.example.programmeringskurstilmorilddataba.ui.ui.FriendsScreen
 import com.example.programmeringskurstilmorilddataba.ui.ui.SearchResultsScreen
 import com.example.programmeringskurstilmorilddataba.ui.ui.UserCourses
+import com.example.programmeringskurstilmorilddataba.ui.ui.ChaptersScreen
+import com.example.programmeringskurstilmorilddataba.ui.ui.TaskScreen
 import com.example.programmeringskurstilmorilddataba.ui.ui.UserProfile
 import com.example.programmeringskurstilmorilddataba.ui.ui.UserUIScreen
 import com.example.programmeringskurstilmorilddataba.ui.ui.admin.AdminDashboard
@@ -74,6 +76,19 @@ fun AppNavigation() {
         composable(Screen.CourseModules.route) { backStackEntry ->
             val courseName = backStackEntry.arguments?.getString("courseName") ?: ""
             CourseModules(navController, courseName)
+        }
+
+        composable(Screen.UserChapters.route) { backStackEntry ->
+            val courseName = backStackEntry.arguments?.getString("courseName") ?: ""
+            val moduleId = backStackEntry.arguments?.getString("moduleId") ?: ""
+            ChaptersScreen(navController, courseName, moduleId)
+        }
+
+        composable(Screen.UserTasks.route) { backStackEntry ->
+            val courseName = backStackEntry.arguments?.getString("courseName") ?: ""
+            val moduleId = backStackEntry.arguments?.getString("moduleId") ?: ""
+            val chapterId = backStackEntry.arguments?.getString("chapterId") ?: ""
+            TaskScreen(navController, courseName, moduleId, chapterId)
         }
 
         composable(Screen.ModuleEditorScreen.route) { backStackEntry ->

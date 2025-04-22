@@ -309,16 +309,13 @@ fun DropDownTaskOptionsScreen(
                 .get()
                 .await()
 
+
             val taskData = doc.get(taskId) as? Map<String, Any>
             taskQuestion = taskData?.get("question") as? String ?: ""
 
             val optionSetsMap = taskData?.get("optionSets") as? Map<String, Map<String, Map<String, Any>>> ?: emptyMap()
             val optionSets1 = optionSetsMap.toSortedMap().values.toList()
 
-
-
-            println("optionSets1: $optionSets1")
-            println("optionSetsMap: $optionSetsMap")
 
             optionSets1.forEach {
                 val tempList = it.values.mapNotNull {

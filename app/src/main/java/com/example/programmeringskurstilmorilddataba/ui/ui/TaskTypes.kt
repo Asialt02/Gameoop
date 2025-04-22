@@ -3,6 +3,7 @@ package com.example.programmeringskurstilmorilddataba.ui.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -15,14 +16,20 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -30,86 +37,274 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.navigation.NavController
+import com.example.programmeringskurstilmorilddataba.data.Chapter
 import com.example.programmeringskurstilmorilddataba.data.DropDownTask
 import com.example.programmeringskurstilmorilddataba.data.Option
 import com.example.programmeringskurstilmorilddataba.data.Task
 import com.example.programmeringskurstilmorilddataba.data.TaskType
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.tasks.await
 
 
 // NOT FINISHED
 
-
 @Composable
-fun TaskScreen (
-    onContinueClick: () -> Unit = {},
-    task: Any,
-    content: @Composable (ColumnScope.() -> Unit) = {}
+fun TaskScreen(
+    navController: NavController,
+    courseId: String,
+    moduleId: String,
+    chapterId: String
 ) {
-    //val taskOptions = task.options
-    //var selectedAnswer by remember { mutableStateOf<Option>(taskOptions[0]) }
+    val db = FirebaseFirestore.getInstance()
+    var chapter by remember { mutableStateOf<Chapter?>(null) }
+    var tasks by remember { mutableStateOf<List<Task>>(emptyList()) }
 
-    Column (
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.primaryContainer),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
+    LaunchedEffect(chapterId) {
 
-        content()
+        db.collection("courses")
+            .document(courseId)
+            .collection("modules")
+            .document(moduleId)
+            .collection("chapters")
+            .document(chapterId)
+            .addSnapshotListener { doc, _ ->
+                doc?.let {
+                    chapter = Chapter(
+                        id = doc.id,
+                        title = doc.getString("title") ?: "",
+                        introduction = doc.getString("introduction") ?: "",
+                        level = doc.getLong("level")?.toInt() ?: 0
+                    )
+                }
+            }
 
-        Button(onClick = onContinueClick) {
-            Text("Continue")
+        db.collection("courses")
+            .document(courseId)
+            .collection("modules")
+            .document(moduleId)
+            .collection("chapters")
+            .document(chapterId)
+            .collection("tasks")
+            .addSnapshotListener { snapshots, e ->
+                if (e != null) return@addSnapshotListener
+
+                tasks = snapshots?.documents?.map { doc ->
+                    Task(
+                        id = doc.id,
+                        question = doc.getString("question") ?: "",
+                        type = TaskType.fromString(doc.getString("type") ?: "Multiple Choice"),
+                        options = emptyList() // You might want to load options here
+                    )
+                } ?: emptyList()
+            }
+
+
+
+    }
+
+
+    if (tasks.isEmpty()) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Text("No tasks available in this chapter")
         }
+        return
+    }
+
+    var currentIndex by remember { mutableStateOf(0) }
+    var showSummary by remember { mutableStateOf(false) }
+    var currentAnswer by remember { mutableStateOf<Boolean>(false) }
+    var answers = remember { mutableStateListOf<Boolean>() }
+
+    var currentTask by remember { mutableStateOf(tasks[currentIndex]) }
+
+    if (showSummary) {
+        val correctCount = answers.count { it }
+        val incorrectCount = answers.count { !it }
+        SummaryScreen(correctCount, incorrectCount, navController = navController )
+    } else {
+
+        Column (
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            when(currentTask.type) {
+                TaskType.DropDown ->
+                    DropDownTaskScreen(
+                        courseId = courseId,
+                        moduleId = moduleId,
+                        chapterId = chapterId,
+                        taskId = currentTask.id,
+                        onOptionChosen = { isCorrect ->
+                            currentAnswer = isCorrect
+                        }
+                    )
+                TaskType.MultipleChoice ->
+                    MultipleChoiceTask(
+                        courseId = courseId,
+                        moduleId = moduleId,
+                        chapterId = chapterId,
+                        taskId = currentTask.id,
+                        onOptionChosen = { isCorrect ->
+                            currentAnswer = isCorrect
+                            println(currentAnswer)
+                        })
+                TaskType.YesNo ->
+                    {}
+            }
+            Button(
+                onClick = {
+                    answers.add(currentAnswer)
+                    currentAnswer = false
+                    if (currentIndex < tasks.size-1) {
+                        currentIndex++
+                        currentTask = tasks[currentIndex]
+                    } else {
+                        showSummary = true
+                    }
+                }
+            ) {
+                Text("Continue")
+            }
+        }
+
+//        val taskMap = chapter.tasks!![taskKeys[currentIndex]] as? Map<*, *> ?: emptyMap<Any, Any>()
+//        val optionsMap = taskMap["options"] as? Map<*, *> ?: emptyMap<Any, Any>()
+//        val questionText = taskMap["question"]?.toString() ?: "No Question"
+//
+//        val options = optionsMap.mapNotNull { entry ->
+//            val key = entry.key as? String ?: return@mapNotNull null
+//            val opt = entry.value as? Map<*, *> ?: return@mapNotNull null
+//            key to Option(
+//                text = opt["text"].toString(),
+//                isCorrect = opt["isCorrect"] as? Boolean ?: false
+//            )
+//        }.toMap()
+//
+//        val task = Task(
+//            question = questionText,
+//            options = options
+//        )
+
+//        TaskDetailScreen(
+//            task = task,
+//            onContinue = { isCorrect ->
+//                answers.add(isCorrect)
+//                if (isCorrect) {
+//                    correctCount++
+//                } else {
+//                    incorrectCount++
+//                }
+//                if (currentIndex < taskKeys.size - 1) {
+//                    currentIndex++
+//                } else {
+//                    showSummary = true
+//                }
+//            }
+//        )
     }
 }
 
 @Composable
 fun MultipleChoiceTask (
-    task: Task
+    courseId: String,
+    moduleId: String,
+    chapterId: String,
+    taskId: String,
+    onOptionChosen: (Boolean) -> Unit = {},
 ) {
-    val taskOptions = task.options
+
+    val db = FirebaseFirestore.getInstance()
+    var taskQuestion by remember { mutableStateOf("") }
+    var taskOptions by remember { mutableStateOf<List<Option>>(emptyList()) }
+
+    var isLoading by remember { mutableStateOf(true) }
+    var error by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(taskId) {
+        try {
+            val doc = db.collection("courses")
+                .document(courseId)
+                .collection("modules")
+                .document(moduleId)
+                .collection("chapters")
+                .document(chapterId)
+                .get()
+                .await()
+
+            taskQuestion = db.collection("courses")
+                .document(courseId)
+                .collection("modules")
+                .document(moduleId)
+                .collection("chapters")
+                .document(chapterId)
+                .collection("tasks")
+                .document(taskId)
+                .get()
+                .await()
+                .get("question") as? String ?: ""
+
+            val taskData = doc.get(taskId) as? Map<String, Any>
+
+            val optionsMap = taskData?.get("options") as? Map<String, Map<String, Any>> ?: emptyMap()
+            val tempList = optionsMap.mapNotNull {
+                val id = it.key
+                val text = it.value["text"] as? String ?: return@mapNotNull null
+                val isCorrect = it.value["isCorrect"] as? Boolean ?: false
+                id to (text to isCorrect)
+            }.sortedBy { it.first }
+
+            tempList.forEach { option ->
+                taskOptions = taskOptions.plus(listOf(Option(id = option.first, text = option.second.first, isCorrect = option.second.second)))
+            }
+
+            println(taskOptions)
+
+            isLoading = false
+
+        } catch (e: Exception) {
+            error = "Failed to load options: ${e.message}"
+            isLoading = false
+        }
+    }
 
     Column (
         modifier = Modifier
             .fillMaxWidth()
             .fillMaxHeight(0.8f),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.SpaceAround
     ) {
+        Spacer(modifier = Modifier.height(128.dp))
+
         Card {
-            Text(text = task.question)
+            Text(text = taskQuestion)
         }
 
-        Row {
-            Button(
-                onClick = {},
-                modifier = Modifier.weight(0.4f)
-            ) {
-                Text(taskOptions[0].text)
-            }
-            Spacer(modifier = Modifier.weight(0.2f))
-            Button(
-                onClick = {},
-                modifier = Modifier.weight(0.4f)
-            ) {
-                Text(taskOptions[1].text)
-            }
-        }
-        Row {
-            Button(
-                onClick = {},
-                modifier = Modifier.weight(0.4f)
-            ) {
-                Text(taskOptions[2].text)
-            }
-            Spacer(modifier = Modifier.weight(0.2f))
-            Button(
-                onClick = {},
-                modifier = Modifier.weight(0.4f)
-            ) {
-                Text(taskOptions[3].text)
+        Spacer(modifier = Modifier.height(32.dp))
+
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(2),
+            modifier = Modifier.fillMaxSize()
+        ) {
+            taskOptions.forEachIndexed { index, option ->
+                item {
+                    Button(
+                        onClick = { onOptionChosen(option.isCorrect) },
+                        modifier = Modifier.weight(0.4f)
+                    ) {
+                        Text(option.text)
+                    }
+                }
             }
         }
     }
@@ -117,13 +312,83 @@ fun MultipleChoiceTask (
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun DropDownTask (
-    task: DropDownTask
+fun DropDownTaskScreen (
+    courseId: String,
+    moduleId: String,
+    chapterId: String,
+    taskId: String,
+    onOptionChosen: (Boolean) -> Unit = {},
 ) {
-    val taskText = task.question
-    val taskOptions = task.options
+    val db = FirebaseFirestore.getInstance()
+    var taskQuestion by remember { mutableStateOf("") }
+    var taskOptions by remember { mutableStateOf<List<List<Option>>>(emptyList()) }
 
-    val splitText = taskText.split("[option]")
+    var splitTaskQuestion by remember { mutableStateOf(emptyList<String>()) }
+
+    var chosenOptions by remember { mutableStateOf(emptyList<Boolean>()) }
+
+    var isLoading by remember { mutableStateOf(true) }
+    var error by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(taskId) {
+        try {
+            val doc = db.collection("courses")
+                .document(courseId)
+                .collection("modules")
+                .document(moduleId)
+                .collection("chapters")
+                .document(chapterId)
+                .get()
+                .await()
+
+            taskQuestion = db.collection("courses")
+                .document(courseId)
+                .collection("modules")
+                .document(moduleId)
+                .collection("chapters")
+                .document(chapterId)
+                .collection("tasks")
+                .document(taskId)
+                .get()
+                .await()
+                .get("question") as? String ?: ""
+
+            splitTaskQuestion = taskQuestion.split("[OPTION]")
+
+
+            val taskData = doc.get(taskId) as? Map<String, Any>
+
+            val optionSetsMap = taskData?.get("optionSets") as? Map<String, Map<String, Map<String, Any>>> ?: emptyMap()
+            val optionSets1 = optionSetsMap.toSortedMap().values.toList()
+
+            taskOptions = emptyList()
+
+            optionSets1.forEach { set ->
+                val tempList = set.mapNotNull {
+                    val id = it.key
+                    val text = it.value["text"] as? String ?: return@mapNotNull null
+                    val isCorrect = it.value["isCorrect"] as? Boolean ?: false
+                    id to (text to isCorrect)
+                }.sortedBy { it.first }
+
+                var tempList1 = emptyList<Option>()
+                tempList.forEach { option ->
+                    tempList1 = tempList1.plus(listOf(Option(id = option.first, text = option.second.first, isCorrect = option.second.second)))
+                }
+
+                taskOptions = taskOptions.plus(listOf(tempList1))
+
+            }
+
+            chosenOptions = taskOptions.map { it[0].isCorrect }
+
+            isLoading = false
+        } catch (e: Exception) {
+            error = "Failed to load options: ${e.message}"
+            isLoading = false
+        }
+    }
+
 
     Column (
         modifier = Modifier
@@ -141,7 +406,7 @@ fun DropDownTask (
                 .padding(8.dp),
             verticalArrangement = Arrangement.Center
         ) {
-            splitText.forEachIndexed { index, content ->
+            splitTaskQuestion.forEachIndexed { index, content ->
                 content.split(" ").forEach {
                     Text(
                         text = "$it ",
@@ -149,7 +414,13 @@ fun DropDownTask (
                     )
                 }
                 if (index < taskOptions.size) {
-                    DropDownTaskButton(taskOptions[index])
+                    DropDownTaskButton(
+                        options = taskOptions[index],
+                        onOptionChosen = { isCorrect ->
+                            chosenOptions = chosenOptions.toMutableList().apply { this[index] = isCorrect }
+                            onOptionChosen(chosenOptions.all { it == true })
+                        }
+                    )
                 }
             }
         }
@@ -165,8 +436,9 @@ fun DropDownTaskButton(
     var chosenOption by remember { mutableStateOf(0) }
     Button(
         shape = CutCornerShape(0.dp),
-        contentPadding = PaddingValues(0.dp),
-        modifier = Modifier.height((MaterialTheme.typography.bodyLarge.fontSize.value+8).dp),
+        contentPadding = PaddingValues(2.dp),
+        modifier = Modifier
+            .height((MaterialTheme.typography.bodyLarge.fontSize.value+8).dp),
         onClick = { showOptionDialog = true }
     ) {
         Text(options[chosenOption].text)
@@ -239,69 +511,6 @@ fun TaskPreview() {
 //    }
 }
 
-/*
-
-@Composable
-fun TaskScreen(
-    chapter: Chapter,
-    navController: NavController,
-) {
-    if (chapter.tasks.isNullOrEmpty()) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            Text("No tasks available in this chapter")
-        }
-        return
-    }
-
-    var currentIndex by remember { mutableStateOf(0) }
-    val taskKeys = chapter.tasks!!.keys.toList()
-    var showSummary by remember { mutableStateOf(false) }
-    val answers = remember { mutableStateListOf<Boolean>() }
-    var correctCount by remember { mutableStateOf(0) }
-    var incorrectCount by remember { mutableStateOf(0) }
-
-    if (showSummary) {
-        SummaryScreen(correctCount, incorrectCount, navController =navController )
-    } else {
-        val taskMap = chapter.tasks!![taskKeys[currentIndex]] as? Map<*, *> ?: emptyMap<Any, Any>()
-        val optionsMap = taskMap["options"] as? Map<*, *> ?: emptyMap<Any, Any>()
-        val questionText = taskMap["question"]?.toString() ?: "No Question"
-
-        val options = optionsMap.mapNotNull { entry ->
-            val key = entry.key as? String ?: return@mapNotNull null
-            val opt = entry.value as? Map<*, *> ?: return@mapNotNull null
-            key to Option(
-                text = opt["text"].toString(),
-                isCorrect = opt["isCorrect"] as? Boolean ?: false
-            )
-        }.toMap()
-
-        val task = Task(
-            question = questionText,
-            options = options
-        )
-
-        TaskDetailScreen(
-            task = task,
-            onContinue = { isCorrect ->
-                answers.add(isCorrect)
-                if (isCorrect) {
-                    correctCount++
-                } else {
-                    incorrectCount++
-                }
-                if (currentIndex < taskKeys.size - 1) {
-                    currentIndex++
-                } else {
-                    showSummary = true
-                }
-            }
-        )
-    }
-}
 
 @Composable
 fun SummaryScreen(
@@ -312,7 +521,7 @@ fun SummaryScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundColor),
+            .background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -404,7 +613,7 @@ fun SummaryScreen(
     }
 }
 
-
+/*
 @Composable
 fun TaskDetailScreen(
     task: Task,
@@ -498,3 +707,4 @@ fun TaskDetailScreen(
     }
 }
 */
+

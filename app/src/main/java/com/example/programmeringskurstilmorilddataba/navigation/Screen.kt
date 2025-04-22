@@ -11,6 +11,9 @@ sealed class Screen(val route: String) {
     object ChangeUsername : Screen("changeName")
     object ChangePassword : Screen("changePassword")
 
+
+    // User (?)
+
     object CourseScreen : Screen("courseScreen/{courseName}") {
         fun createRoute(courseName: String) = "courseScreen/$courseName"
     }
@@ -18,6 +21,16 @@ sealed class Screen(val route: String) {
     object CourseModules : Screen("courseModules/{courseName}") {
         fun createRoute(courseName: String) = "courseModules/$courseName"
     }
+
+    object UserChapters : Screen(route = "userChapters/{courseName}/{moduleId}") {
+        fun createRoute(courseName: String, moduleId: String) = "userChapters/$courseName/$moduleId"
+    }
+
+    object UserTasks : Screen(route = "userTasks/{courseName}/{moduleId}/{chapterId}") {
+        fun createRoute(courseName: String, moduleId: String, chapterId: String) = "userTasks/$courseName/$moduleId/$chapterId"
+    }
+
+    // Admin (?)
 
     object ModuleEditorScreen : Screen("moduleEditor/{courseName}/{moduleId}") {
         fun createRoute(courseName: String, moduleId: String) = "moduleEditor/$courseName/$moduleId"

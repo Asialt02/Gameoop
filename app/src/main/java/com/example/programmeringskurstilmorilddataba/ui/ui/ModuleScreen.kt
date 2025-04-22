@@ -34,13 +34,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.programmeringskurstilmorilddataba.navigation.BottomNavBar
+import com.example.programmeringskurstilmorilddataba.navigation.Screen
 import com.google.firebase.firestore.FirebaseFirestore
 
 @Composable
 fun CourseModules(navController: NavController, courseName: String) {
     val db = FirebaseFirestore.getInstance()
     val moduleNames = remember { mutableStateOf<List<String>>(emptyList()) }
-    val isPassed = remember { mutableStateOf(false) }
+    val isPassed = remember { mutableStateOf(true) }
 
     LaunchedEffect(courseName) {
         db.collection("courses")
@@ -81,7 +82,9 @@ fun CourseModules(navController: NavController, courseName: String) {
             } else {
 // Do not remove, Amir will
                 item { ModuleCard(
+                    navController = navController,
                     moduleName = "Object Oriented Programming",
+                    courseName = "",
                     chaptersComplete = 2,
                     numberOfChapters = 5,
                     taskComplete = 10,
@@ -91,7 +94,9 @@ fun CourseModules(navController: NavController, courseName: String) {
                 if (isPassed.value) {
                     itemsIndexed(moduleNames.value) { index, name ->
                         ModuleCard(
+                            navController = navController,
                             moduleName = name,
+                            courseName = courseName,
                             chaptersComplete = 2,
                             numberOfChapters = 5,
                             taskComplete = 10,
@@ -115,8 +120,15 @@ fun CourseModules(navController: NavController, courseName: String) {
 }
 
 @Composable
-fun ModuleCard(moduleName: String, chaptersComplete: Int, numberOfChapters: Int,
-               taskComplete: Int, numberOfTasks: Int) {
+fun ModuleCard(
+    navController: NavController,
+    courseName: String,
+    moduleName: String,
+    chaptersComplete: Int,
+    numberOfChapters: Int,
+    taskComplete: Int,
+    numberOfTasks: Int)
+{
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -124,7 +136,8 @@ fun ModuleCard(moduleName: String, chaptersComplete: Int, numberOfChapters: Int,
             .padding(16.dp),
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(8.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFB084E8))
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFB084E8)),
+        onClick = {navController.navigate(Screen.UserChapters.createRoute(courseName, moduleName))}
 
     ) {
         Row(
