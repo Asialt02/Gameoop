@@ -40,6 +40,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import com.example.programmeringskurstilmorilddataba.navigation.BottomNavBar
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -53,7 +54,6 @@ fun FriendsScreen(navController: NavController) {
     var searchResults by remember { mutableStateOf<List<User>>(emptyList()) }
     var isLoading by remember { mutableStateOf(false) }
     val context = LocalContext.current
-    var showBackToFriends by remember { mutableStateOf(false) }
 
     LaunchedEffect(currentUser) {
         currentUser?.uid?.let { userId ->
@@ -90,7 +90,6 @@ fun FriendsScreen(navController: NavController) {
             .addOnSuccessListener { snapshot ->
                 searchResults = snapshot.documents
                     .filter { doc ->
-                        // Exclude current user from search results
                         doc.id != currentUser?.uid && (
                                 (doc.getString("name") ?: "").contains(query, ignoreCase = true) ||
                                         (doc.getString("email") ?: "").contains(query, ignoreCase = true)
@@ -128,7 +127,8 @@ fun FriendsScreen(navController: NavController) {
                 .set(friendData)
                 .addOnSuccessListener {
                     Toast.makeText(context, "${friend.name} added!", Toast.LENGTH_SHORT).show()
-                    showBackToFriends = true
+                    searchQuery = ""
+                    searchResults = emptyList()
                 }
                 .addOnFailureListener { e ->
                     Toast.makeText(context, "Failed to add friend", Toast.LENGTH_SHORT).show()
@@ -137,123 +137,124 @@ fun FriendsScreen(navController: NavController) {
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp, top = 16.dp)
-    ) {
-        Text(
-            text = "Search for friends",
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(top = 24.dp, bottom = 8.dp)
-        )
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
+    Scaffold(
+        bottomBar = { BottomNavBar(navController) }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(16.dp)
         ) {
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { newValue ->
-                    searchQuery = newValue
-                    showBackToFriends = false
-                },
-                modifier = Modifier.weight(1f),
-                placeholder = { Text("Search") },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
-                singleLine = true
+            Text(
+                text = "Search for friends",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(bottom = 8.dp)
             )
 
-            Spacer(modifier = Modifier.width(8.dp))
-
-            Button(
-                onClick = {
-                    if (searchQuery.isNotBlank()) {
-                        searchAllUsers(searchQuery)
-                        showBackToFriends = false
-                    }
-                },
-                modifier = Modifier.height(56.dp),
-                enabled = !isLoading
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                if (isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = Color.White,
-                        strokeWidth = 2.dp
-                    )
-                } else {
-                    Text("Search")
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        when {
-            isLoading -> {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
-            }
-            searchResults.isNotEmpty() -> {
-                Column {
-
-                    Button(
-                        onClick = {
-                            searchQuery = ""
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { newValue ->
+                        searchQuery = newValue
+                        if (newValue.isBlank()) {
                             searchResults = emptyList()
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 8.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer
+                        }
+                    },
+                    modifier = Modifier.weight(1f),
+                    placeholder = { Text("Search") },
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+                    singleLine = true
+                )
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                Button(
+                    onClick = { searchAllUsers(searchQuery) },
+                    modifier = Modifier.height(56.dp),
+                    enabled = !isLoading && searchQuery.isNotBlank()
+                ) {
+                    if (isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = Color.White,
+                            strokeWidth = 2.dp
                         )
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Back to Friends List")
+                    } else {
+                        Text("Search")
                     }
+                }
+            }
 
-                    Text(
-                        text = "Search Results",
-                        style = MaterialTheme.typography.titleLarge,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
+            Spacer(modifier = Modifier.height(16.dp))
 
-                    LazyColumn {
-                        items(searchResults) { user ->
-                            UserSearchResultItem(
-                                user = user,
-                                currentUserId = currentUser?.uid ?: "",
-                                onAddFriend = { addFriend(user) }
-                            )
-                            HorizontalDivider()
+            when {
+                isLoading -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                }
+                searchResults.isNotEmpty() -> {
+                    Column(
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(
+                            text = "Search Results",
+                            style = MaterialTheme.typography.titleLarge,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+
+                        LazyColumn(
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            items(searchResults) { user ->
+                                UserSearchResultItem(
+                                    user = user,
+                                    currentUserId = currentUser?.uid ?: "",
+                                    onAddFriend = { addFriend(user) }
+                                )
+                                Divider()
+                            }
                         }
                     }
                 }
-            }
-            else -> {
-                Text(
-                    text = "Friends",
-                    style = MaterialTheme.typography.titleLarge,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-                LazyColumn {
-                    items(allFriends) { friend ->
-                        FriendItem(friend = friend)
-                        HorizontalDivider()
+                else -> {
+                    Column(
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(
+                            text = "Friends",
+                            style = MaterialTheme.typography.titleLarge,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+
+                        if (allFriends.isEmpty()) {
+                            Box(
+                                modifier = Modifier.weight(1f),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text("No friends yet. Search for friends to add!")
+                            }
+                        } else {
+                            LazyColumn(
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                items(allFriends) { friend ->
+                                    FriendItem(friend = friend)
+                                    HorizontalDivider()
+                                }
+                            }
+                        }
                     }
                 }
             }
         }
     }
 }
+
 
 @Composable
 fun UserSearchResultItem(
