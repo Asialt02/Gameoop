@@ -137,6 +137,7 @@ fun TaskScreen(
                 .background(MaterialTheme.colorScheme.background),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+
             when(currentTask.type) {
                 TaskType.DropDown ->
                     DropDownTaskScreen(
@@ -159,7 +160,11 @@ fun TaskScreen(
                             println(currentAnswer)
                         })
                 TaskType.YesNo ->
-                    {}
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .fillMaxHeight(0.8f)
+                    ) {  }
             }
             Button(
                 onClick = {
