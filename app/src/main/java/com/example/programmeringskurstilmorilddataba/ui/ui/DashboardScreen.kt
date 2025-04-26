@@ -10,6 +10,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -21,8 +28,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentSnapshot
@@ -113,7 +122,8 @@ fun UserUIScreen(navController: NavController) {
                 Spacer(modifier = Modifier.height(16.dp))
                 ActiveCourseList(navController = navController, courses = courses)
                 Spacer(modifier = Modifier.height(16.dp))
-
+                Progression()
+                Spacer(modifier = Modifier.height(16.dp))
                 LeaderboardSection(friends = friends)
             }
         }
@@ -174,5 +184,85 @@ fun LeaderboardSection(friends: List<Pair<String, Int>>) {
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.padding(top = 8.dp)
         )
+    }
+}
+
+@Composable
+fun Progression() {
+    Column (modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+        Row(modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = "Progression",
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.primary
+            )
+            Text(
+                text = "View All",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.secondary
+            )
+        }
+
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp)
+                .height(60.dp),
+            shape = MaterialTheme.shapes.extraLarge,
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer
+            )
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row {
+                    Icon(
+                        imageVector = Icons.Default.Favorite,
+                        contentDescription = "Points Icon",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+
+                    Text(
+                        text = "20 P",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                }
+
+                Row {
+
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = "Integer Icon",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+
+                    Text(
+                        text = "INT 1",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                }
+
+                Row {
+
+                    Icon(
+                        imageVector = Icons.Default.Star,
+                        contentDescription = "Achievements Icon",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+
+                    Text(
+                        text = "1/45",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                }
+            }
+        }
     }
 }

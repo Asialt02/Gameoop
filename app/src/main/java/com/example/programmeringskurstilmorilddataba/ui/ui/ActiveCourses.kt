@@ -36,13 +36,14 @@ fun ActiveCourseList(navController: NavController,
                      ) {
 
     Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
+        modifier = Modifier
+            .fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = "Active Courses",
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            style = MaterialTheme.typography.headlineMedium
         )
 
         Text(
@@ -57,7 +58,7 @@ fun ActiveCourseList(navController: NavController,
     LazyRow(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = 6.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         items(courses.size) { index ->
