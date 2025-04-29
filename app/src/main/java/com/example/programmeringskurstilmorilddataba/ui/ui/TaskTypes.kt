@@ -29,6 +29,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -119,13 +120,29 @@ fun TaskScreen(
     }
 
     var currentIndex by remember { mutableStateOf(0) }
+    var showIntroduction by remember { mutableStateOf(true) }
     var showSummary by remember { mutableStateOf(false) }
     var currentAnswer by remember { mutableStateOf<Boolean>(false) }
     var answers = remember { mutableStateListOf<Boolean>() }
 
     var currentTask by remember { mutableStateOf(tasks[currentIndex]) }
 
-    if (showSummary) {
+    if (showIntroduction) {
+        Column (
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            chapter?.let { IntroductionScreen(it.introduction) }
+            Button(
+                onClick = {showIntroduction = false}
+            ) {
+                Text("Continue")
+            }
+        }
+    }
+    else if (showSummary) {
         val correctCount = answers.count { it }
         val incorrectCount = answers.count { !it }
         SummaryScreen(correctCount, incorrectCount, navController = navController )
@@ -157,7 +174,6 @@ fun TaskScreen(
                         taskId = currentTask.id,
                         onOptionChosen = { isCorrect ->
                             currentAnswer = isCorrect
-                            println(currentAnswer)
                         })
                 TaskType.YesNo ->
                     Column(
@@ -170,7 +186,7 @@ fun TaskScreen(
                 onClick = {
                     answers.add(currentAnswer)
                     currentAnswer = false
-                    if (currentIndex < tasks.size-1) {
+                    if (currentIndex < tasks.size - 1) {
                         currentIndex++
                         currentTask = tasks[currentIndex]
                     } else {
@@ -220,6 +236,59 @@ fun TaskScreen(
 }
 
 @Composable
+fun IntroductionScreen (
+    introduction: String
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .fillMaxHeight(0.8f)
+            .background(MaterialTheme.colorScheme.background),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            //Spacer(modifier = Modifier.height(128.dp))
+
+            Card(
+                shape = RoundedCornerShape(24.dp),
+                elevation = CardDefaults.cardElevation(8.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                modifier = Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+
+                ) {
+                    Text(
+                        text = "Introduction",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Text(
+                        text = introduction,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
 fun MultipleChoiceTask (
     courseId: String,
     moduleId: String,
@@ -231,6 +300,7 @@ fun MultipleChoiceTask (
     val db = FirebaseFirestore.getInstance()
     var taskQuestion by remember { mutableStateOf("") }
     var taskOptions by remember { mutableStateOf<List<Option>>(emptyList()) }
+    var chosenOption by remember { mutableIntStateOf(-1) }
 
     var isLoading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -274,6 +344,8 @@ fun MultipleChoiceTask (
 
             println(taskOptions)
 
+            chosenOption = -1
+
             isLoading = false
 
         } catch (e: Exception) {
@@ -281,6 +353,7 @@ fun MultipleChoiceTask (
             isLoading = false
         }
     }
+
 
     Column (
         modifier = Modifier
@@ -291,21 +364,40 @@ fun MultipleChoiceTask (
     ) {
         Spacer(modifier = Modifier.height(128.dp))
 
-        Card {
-            Text(text = taskQuestion)
+        Card (
+            shape = RoundedCornerShape(24.dp),
+            elevation = CardDefaults.cardElevation(8.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(text = taskQuestion)
+            }
         }
 
         Spacer(modifier = Modifier.height(32.dp))
 
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize(),
         ) {
             taskOptions.forEachIndexed { index, option ->
                 item {
                     Button(
-                        onClick = { onOptionChosen(option.isCorrect) },
-                        modifier = Modifier.weight(0.4f)
+                        onClick = { onOptionChosen(option.isCorrect); chosenOption = index },
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (chosenOption == index) MaterialTheme.colorScheme.inversePrimary else MaterialTheme.colorScheme.primary
+                        )
                     ) {
                         Text(option.text)
                     }
@@ -394,43 +486,59 @@ fun DropDownTaskScreen (
         }
     }
 
-
     Column (
         modifier = Modifier
             .fillMaxWidth()
             .fillMaxHeight(0.8f),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-
-        FlowRow (
+        Card(
+            shape = RoundedCornerShape(24.dp),
+            elevation = CardDefaults.cardElevation(8.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
             modifier = Modifier
                 .padding(16.dp)
-                .clip(RoundedCornerShape(8.dp))
-                .background(MaterialTheme.colorScheme.surface)
-                .padding(8.dp),
-            verticalArrangement = Arrangement.Center
+                .fillMaxWidth()
         ) {
-            splitTaskQuestion.forEachIndexed { index, content ->
-                content.split(" ").forEach {
-                    Text(
-                        text = "$it ",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
-                if (index < taskOptions.size) {
-                    DropDownTaskButton(
-                        options = taskOptions[index],
-                        onOptionChosen = { isCorrect ->
-                            chosenOptions = chosenOptions.toMutableList().apply { this[index] = isCorrect }
-                            onOptionChosen(chosenOptions.all { it == true })
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                FlowRow(
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color.White)
+                        .padding(8.dp),
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    splitTaskQuestion.forEachIndexed { index, content ->
+                        content.split(" ").forEach {
+                            Text(
+                                text = "$it ",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
                         }
-                    )
+                        if (index < taskOptions.size) {
+                            DropDownTaskButton(
+                                options = taskOptions[index],
+                                onOptionChosen = { isCorrect ->
+                                    chosenOptions = chosenOptions.toMutableList()
+                                        .apply { this[index] = isCorrect }
+                                    onOptionChosen(chosenOptions.all { it == true })
+                                }
+                            )
+                        }
+                    }
                 }
             }
         }
     }
 }
+
 
 @Composable
 fun DropDownTaskButton(
@@ -438,7 +546,12 @@ fun DropDownTaskButton(
     onOptionChosen: (Boolean) -> Unit = {}
 ) {
     var showOptionDialog by remember { mutableStateOf(false) }
-    var chosenOption by remember { mutableStateOf(0) }
+    var chosenOption by remember { mutableStateOf(-1) }
+
+    LaunchedEffect(options) {
+        chosenOption = -1
+    }
+
     Button(
         shape = CutCornerShape(0.dp),
         contentPadding = PaddingValues(2.dp),
@@ -446,7 +559,11 @@ fun DropDownTaskButton(
             .height((MaterialTheme.typography.bodyLarge.fontSize.value+8).dp),
         onClick = { showOptionDialog = true }
     ) {
-        Text(options[chosenOption].text)
+        if (chosenOption == -1) {
+            Text("Choose option")
+        } else {
+            Text(options[chosenOption].text)
+        }
     }
     if (showOptionDialog) {
         Dialog(
@@ -476,46 +593,6 @@ fun DropDownTaskButton(
         }
     }
 }
-
-
-@Preview
-@Composable
-fun TaskPreview() {
-    val testMultTask = Task(
-        id = "0",
-        question = "What is the",
-        type = TaskType.MultipleChoice,
-        options = listOf(
-            Option(id = "0", text = "Yes", isCorrect = false),
-            Option(id = "1", text = "No", isCorrect = false),
-            Option(id = "2", text = "Maybe", isCorrect = true),
-            Option(id = "3", text = "Definitely", isCorrect = false),
-        )
-    )
-
-//    val testDropTask = DropDownTask(
-//        id = "0",
-//        question = "A class that inherits is called [option], and the class it inherits from is called [option].",
-//        type = TaskType.MultipleChoice,
-//        optionSets = listOf(
-//            listOf(
-//                Option(id = "0", text = "Subclass", isCorrect = false),
-//                Option(id = "1", text = "Superclass", isCorrect = false),
-//                Option(id = "2", text = "Class", isCorrect = false),
-//                ),
-//            listOf(
-//                Option(id = "3", text = "Class", isCorrect = false),
-//                Option(id = "4", text = "Superclass", isCorrect = false),
-//                Option(id = "5", text = "Subclass", isCorrect = false),
-//            )
-//        )
-//    )
-//
-//    TaskScreen(task = testMultTask) {
-//        DropDownTask(testDropTask)
-//    }
-}
-
 
 @Composable
 fun SummaryScreen(
@@ -566,7 +643,7 @@ fun SummaryScreen(
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Text(
-                        text = "LVL 2, XP ${correctCount * 5} / ${incorrectCount + correctCount * 5}",
+                        text = "LVL 2, XP ${correctCount * 5} / ${(incorrectCount + correctCount) * 5}",
                         style = MaterialTheme.typography.bodySmall
                     )
 

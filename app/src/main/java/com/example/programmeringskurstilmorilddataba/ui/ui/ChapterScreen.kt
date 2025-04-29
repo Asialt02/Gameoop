@@ -105,7 +105,7 @@ fun ChaptersScreen(
                 ChapterCard(
                     chapterName = chapter.title,
                     level = chapter.level.toString(),
-                    progress = "Placeholder",
+                    progress = "0 of 3",
                     tasks = listOf("Placeholder"),
                     onChapterClick = {
                         navController.navigate(Screen.UserTasks.createRoute(courseName, moduleId, chapter.id))
@@ -181,7 +181,7 @@ fun ChapterCard(
                     modifier = Modifier.padding(end = 8.dp)
                 ) {
                     Text(
-                        text = level,
+                        text = "LVL $level",
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                         color = Color.White
                     )
@@ -195,13 +195,13 @@ fun ChapterCard(
                     modifier = Modifier.padding(end = 8.dp)
                 )
 
-                IconButton(onClick = { expanded = !expanded }) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                        contentDescription = "Go to chapter",
-                        tint = Color.Gray
-                    )
-                }
+//                IconButton(onClick = { expanded = !expanded }) {
+//                    Icon(
+//                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+//                        contentDescription = "Go to chapter",
+//                        tint = Color.Gray
+//                    )
+//                }
             }
             if (expanded) {
                 Column(
