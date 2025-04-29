@@ -306,6 +306,8 @@ fun MultipleChoiceTask (
     var error by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(taskId) {
+        taskQuestion = ""
+        taskOptions = emptyList()
         try {
             val doc = db.collection("courses")
                 .document(courseId)
